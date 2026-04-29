@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { findProjectRoot } from "../scanner/project-root.js";
 import { scanProject } from "../scanner/anatomy-scanner.js";
 import { readJSON, writeJSON, readText, writeText } from "../utils/fs-safe.js";
@@ -237,15 +237,15 @@ export async function initCommand(): Promise<void> {
   try {
     const pm2Cmd = isWindows() ? "where pm2" : "which pm2";
     execSync(pm2Cmd, { stdio: "ignore" });
-    const name = `openwolf-${path.basename(projectRoot)}`;
+    const name = `openwolf-${path.basename(projectRoot).replace(/[^a-zA-Z0-9._-]/g, "-")}`;
     // Resolve daemon script relative to openwolf's install dir, not the target project
     const daemonScript = path.resolve(__dirname, "..", "daemon", "wolf-daemon.js");
     try {
-      execSync(`pm2 start "${daemonScript}" --name ${name} --cwd "${projectRoot}"`, {
+      execFileSync(isWindows() ? "pm2.cmd" : "pm2", ["start", daemonScript, "--name", name, "--cwd", projectRoot], {
         stdio: "ignore",
         env: { ...process.env, OPENWOLF_PROJECT_ROOT: projectRoot },
       });
-      execSync("pm2 save", { stdio: "ignore" });
+      execFileSync(isWindows() ? "pm2.cmd" : "pm2", ["save"], { stdio: "ignore" });
       daemonStatus = "running via pm2";
     } catch {
       daemonStatus = "pm2 found but daemon start failed. Try: openwolf daemon start";
@@ -346,7 +346,7 @@ function generateTemplate(destPath: string, file: string): void {
         memory: { consolidation_after_days: 7, max_entries_before_consolidation: 200 },
         cerebrum: { max_tokens: 2000, reflection_frequency: "weekly" },
         daemon: { port: 18790, log_level: "info" },
-        dashboard: { enabled: true, port: 18791 },
+        dashboard: { enabled: true, port: 18791, host: "127.0.0.1" },
         designqc: { enabled: true, viewports: [{ name: "desktop", width: 1440, height: 900 }, { name: "mobile", width: 375, height: 812 }], max_screenshots: 6, chrome_path: null },
       },
     }, null, 2),

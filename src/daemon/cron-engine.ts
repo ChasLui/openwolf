@@ -311,12 +311,15 @@ export class CronEngine {
     }
 
     const contextParts: string[] = [];
-    for (const file of params.context_files) {
-      const filePath = path.join(this.projectRoot, file);
+    const contextFiles = Array.isArray(params.context_files) ? params.context_files : [];
+    for (const file of contextFiles) {
+      if (typeof file !== "string") continue;
       try {
+        const filePath = this.resolveProjectContextFile(file);
         contextParts.push(`--- ${file} ---\n${fs.readFileSync(filePath, "utf-8")}`);
-      } catch {
-        contextParts.push(`--- ${file} --- (not found)`);
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : "not found";
+        contextParts.push(`--- ${file} --- (${reason})`);
       }
     }
 
@@ -330,15 +333,14 @@ export class CronEngine {
       const env = { ...process.env };
       delete env.ANTHROPIC_API_KEY;
 
-      const proc = spawnSync("claude -p --output-format text", {
+      const claudeBin = process.platform === "win32" ? "claude.cmd" : "claude";
+      const proc = spawnSync(claudeBin, ["-p", "--output-format", "text"], {
         input: fullPrompt,
         timeout: 120000,
         encoding: "utf-8",
         cwd: this.projectRoot,
         env,
         stdio: ["pipe", "pipe", "pipe"],
-        // shell: true needed on Windows so that claude.cmd is resolved
-        shell: true,
         windowsHide: true,
       });
 
@@ -377,5 +379,22 @@ export class CronEngine {
     } catch (err) {
       throw new Error(`claude -p failed: ${err instanceof Error ? err.message : String(err)}`);
     }
+  }
+
+  private resolveProjectContextFile(file: string): string {
+    if (file.includes("\0")) {
+      throw new Error("invalid path");
+    }
+
+    const root = fs.realpathSync(this.projectRoot);
+    const requested = path.resolve(this.projectRoot, file);
+    const resolved = fs.realpathSync(requested);
+    const relative = path.relative(root, resolved);
+
+    if (relative.startsWith("..") || path.isAbsolute(relative)) {
+      throw new Error("outside project root");
+    }
+
+    return resolved;
   }
 }
