@@ -112,6 +112,25 @@ Total realistic estimate: **20–40 hours of focused work** spread over 1–2 we
    - Cons: every new agent = N×M coupling; no plugin model for community contributions
    - **Rejected** for long-term maintainability
 
+## Findings during Phase 1a (2026-05-09)
+
+**Codex and Gemini hook protocols cannot host file-op hooks.** Verified against:
+- `~/.codex/hooks.json` written by `panda init --agent codex` v1.3.5
+- `~/.codex/panda-rewrite.sh` source (panda 1.3.5)
+- `~/.gemini/settings.json` written by `rtk init --gemini` and `panda init --gemini`
+
+Both agents only support shell-command interception:
+- Codex: `matcher: "shell"` in PreToolUse / PostToolUse, no Read/Write/Edit
+- Gemini: `matcher: "run_shell_command"` in BeforeTool, no file-op matchers
+
+Implication for OpenWolf 6-hook surface (session-start / pre-read / pre-write / post-read / post-write / stop):
+- **Claude**: 6/6 hooks installable (current behavior)
+- **Codex / Gemini**: 0/6 file-op hooks; only shell-command hook + soft-instructions (`@OPENWOLF.md` ref in AGENTS.md / GEMINI.md)
+- **OpenCode / OpenClaw**: TBD in Phase 2 (TS plugin / openclaw.json hook system)
+- **Hermes**: TBD in Phase 3 (Python plugin via `pre_tool_call`)
+
+**Decision**: Mark codex/gemini as "degraded" tier. The adapter still does what's possible (shell hook + soft-instruction injection) but documents the gap. Users on codex/gemini are pointed to claude for full OpenWolf experience.
+
 ## Open questions
 
 1. **Upstream relationship**: Will `cytostack/openwolf` accept this PR? Should we `git remote add upstream` and PR-driven from the start, or develop independently and propose later?
