@@ -4,31 +4,45 @@ The Python plugin under `src/agents/hermes/python/` ships to PyPI separately
 from the OpenWolf npm package. Versions track the plugin's own changelog,
 not OpenWolf's main version.
 
-## One-time PyPI setup (Trusted Publishing)
+## Current auth: PyPI API token (legacy)
 
-Trusted Publishing avoids long-lived API tokens. Do this once per repo:
+The workflow uploads via `${{ secrets.PYPI_API_TOKEN }}`, a project-scoped
+API token stored as a repo secret. Set with:
 
-1. Create the project on PyPI by logging in at https://pypi.org and clicking
-   "Your projects" → publish first version manually OR pre-register the
-   project name through the "Pending publishers" UI.
-2. Open https://pypi.org/manage/account/publishing/ and click
-   **Add a new publisher**.
-3. Fill in:
+```bash
+printf '%s' '<pypi-token-value>' | gh secret set PYPI_API_TOKEN --repo ChasLui/openwolf
+```
+
+PyPI tokens look like `pypi-AgEIcHlwaS5vcmc...`. Generate one at
+https://pypi.org/manage/account/token/ scoped to the `openwolf-hermes`
+project after the first manual upload (PyPI requires the project to exist
+before per-project tokens can be created — for the very first release,
+generate an account-wide token, upload, then rotate to a project-scoped
+token).
+
+If the token leaks, revoke immediately at the PyPI tokens page and rotate
+via `gh secret set` again.
+
+## Recommended long-term: Trusted Publishing (OIDC)
+
+Trusted Publishing replaces long-lived tokens with per-workflow OIDC. To
+migrate:
+
+1. Open https://pypi.org/manage/account/publishing/ → **Add a new publisher**.
+2. Fill in:
    - **Owner**: `ChasLui`
    - **Repository**: `openwolf`
    - **Workflow name**: `publish-hermes-plugin.yml`
    - **Environment name**: `pypi`
-4. Save. PyPI now trusts that exact workflow + environment combination
-   to upload `openwolf-hermes`.
-
-## One-time GitHub setup
-
-1. In `ChasLui/openwolf` repo settings → Environments → New environment
-   named `pypi`.
-2. (Optional but recommended) Enable "Required reviewers" so a human must
-   approve before each PyPI upload runs.
-3. (Optional) Restrict the environment to tag refs matching
-   `openwolf-hermes-v*`.
+3. In `ChasLui/openwolf` repo settings → Environments → New environment
+   named `pypi` (optional: required reviewers for two-person publish).
+4. Edit `.github/workflows/publish-hermes-plugin.yml`:
+   - Add `permissions: id-token: write` on the `publish` job.
+   - Add `environment: { name: pypi, url: https://pypi.org/p/openwolf-hermes }`.
+   - Remove `with: password: ${{ secrets.PYPI_API_TOKEN }}` from the
+     `pypa/gh-action-pypi-publish` step (Trusted Publishing fills it in
+     automatically).
+5. Delete the `PYPI_API_TOKEN` secret: `gh secret delete PYPI_API_TOKEN --repo ChasLui/openwolf`.
 
 ## Release flow
 
