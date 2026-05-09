@@ -35,7 +35,7 @@ export function createProgram(): Command {
     )
     .option(
       "--agent <name>",
-      "Target agent: claude (default, per-project .wolf/) | codex | gemini | all",
+      "Target agent: claude (default, per-project .wolf/) | codex | gemini | opencode | openclaw | hermes | cline | cursor | pi-mono | all",
       "claude",
     )
     .option("--uninstall", "Remove OpenWolf integration for the chosen agent")

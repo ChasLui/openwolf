@@ -7,7 +7,10 @@ export type AgentName =
   | "gemini"
   | "opencode"
   | "openclaw"
-  | "hermes";
+  | "hermes"
+  | "pi-mono"
+  | "cline"
+  | "cursor";
 
 export type CanonicalTool =
   | "read"

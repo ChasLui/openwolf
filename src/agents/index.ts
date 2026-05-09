@@ -3,19 +3,25 @@
 
 import type { AgentAdapter, AgentName } from "./types.js";
 import { ClaudeAdapter } from "./claude.js";
+import { ClineAdapter } from "./cline.js";
 import { CodexAdapter } from "./codex.js";
+import { CursorAdapter } from "./cursor.js";
 import { GeminiAdapter } from "./gemini.js";
 import { HermesAdapter } from "./hermes.js";
 import { OpenClawAdapter } from "./openclaw.js";
 import { OpenCodeAdapter } from "./opencode.js";
+import { PiMonoAdapter } from "./pi-mono.js";
 
 const REGISTRY = {
   claude: () => new ClaudeAdapter(),
+  cline: () => new ClineAdapter(),
   codex: () => new CodexAdapter(),
+  cursor: () => new CursorAdapter(),
   gemini: () => new GeminiAdapter(),
   hermes: () => new HermesAdapter(),
   openclaw: () => new OpenClawAdapter(),
   opencode: () => new OpenCodeAdapter(),
+  "pi-mono": () => new PiMonoAdapter(),
 } as const satisfies Record<string, () => AgentAdapter>;
 
 export type SupportedAgent = keyof typeof REGISTRY;
