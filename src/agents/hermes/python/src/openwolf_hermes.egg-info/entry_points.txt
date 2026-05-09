@@ -1,2 +1,0 @@
-[hermes_agent.plugins]
-openwolf = openwolf_hermes

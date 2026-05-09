@@ -1,8 +1,0 @@
-README.md
-pyproject.toml
-src/openwolf_hermes/__init__.py
-src/openwolf_hermes.egg-info/PKG-INFO
-src/openwolf_hermes.egg-info/SOURCES.txt
-src/openwolf_hermes.egg-info/dependency_links.txt
-src/openwolf_hermes.egg-info/entry_points.txt
-src/openwolf_hermes.egg-info/top_level.txt
