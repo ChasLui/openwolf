@@ -47,14 +47,19 @@ jobs:
     needs: build
     if: ${{ startsWith(github.ref, 'refs/tags/openwolf-hermes-v') && github.event.inputs.dry_run != 'true' }}
     runs-on: ubuntu-latest
-    # Auth: PYPI_API_TOKEN repo secret (legacy API token, scoped to
-    # openwolf-hermes project on PyPI). Long-term plan: migrate to
-    # Trusted Publishing (OIDC) — see src/agents/hermes/python/RELEASE.md.
+    # Auth: PyPI Trusted Publishing (OIDC). PyPI must have a publisher
+    # registered for ChasLui/openwolf + this workflow + pypi environment.
+    # First release uses a "pending publisher" since the project does not
+    # yet exist on PyPI; the pending entry auto-promotes on first upload.
+    # See src/agents/hermes/python/RELEASE.md for setup steps.
+    environment:
+      name: pypi
+      url: https://pypi.org/p/openwolf-hermes
+    permissions:
+      id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: openwolf-hermes-dist
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
