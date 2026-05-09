@@ -5,11 +5,15 @@ import type { AgentAdapter, AgentName } from "./types.js";
 import { ClaudeAdapter } from "./claude.js";
 import { CodexAdapter } from "./codex.js";
 import { GeminiAdapter } from "./gemini.js";
+import { OpenClawAdapter } from "./openclaw.js";
+import { OpenCodeAdapter } from "./opencode.js";
 
 const REGISTRY = {
   claude: () => new ClaudeAdapter(),
   codex: () => new CodexAdapter(),
   gemini: () => new GeminiAdapter(),
+  openclaw: () => new OpenClawAdapter(),
+  opencode: () => new OpenCodeAdapter(),
 } as const satisfies Record<string, () => AgentAdapter>;
 
 export type SupportedAgent = keyof typeof REGISTRY;
@@ -18,8 +22,8 @@ export function getAdapter(name: AgentName): AgentAdapter {
   const factory = REGISTRY[name as SupportedAgent];
   if (!factory) {
     throw new Error(
-      `agent "${name}" not yet supported (Phase 1a only: claude/codex/gemini). ` +
-        `OpenCode/OpenClaw land in Phase 2; Hermes in Phase 3.`,
+      `agent "${name}" not yet supported (Phase 2: claude/codex/gemini/opencode/openclaw). ` +
+        `Hermes lands in Phase 3.`,
     );
   }
   return factory();
