@@ -1,22 +1,15 @@
-// GeminiAdapter — DEGRADED: Gemini CLI hooks only support BeforeTool with
-// matcher "run_shell_command". No Read/Write file-op matchers (verified
-// 2026-05-09 against ~/.gemini/settings.json and rtk + pandafilter impls).
+// GeminiAdapter — soft-instruction installer for Gemini CLI.
 //
-// Capabilities:
-//   ✗ SessionStart       — no equivalent
-//   ✗ pre-read           — no Read matcher
-//   ✗ pre-write          — no Write/Edit matcher
-//   ✓ pre-shell          — BeforeTool matcher "run_shell_command"
-//   ?  post-shell         — Gemini AfterTool exists; needs verification
-//   ✗ Stop               — no equivalent
+// Same rationale as CodexAdapter: Gemini's hook protocol only supports
+// BeforeTool matcher "run_shell_command", no file-op matchers. OpenWolf on
+// Gemini is delivered via a marker-delimited section in ~/.gemini/GEMINI.md.
 //
-// Strategy: same as CodexAdapter — install pre-shell only, fall back to soft
-// instructions in ~/.gemini/GEMINI.md.
-//
-// Config file: ~/.gemini/settings.json (hook section: hooks.BeforeTool[])
-// Hook script: shell binary (e.g. ~/.gemini/openwolf-hook.sh that execs
-//   "openwolf hook gemini" delegating to a Node shim).
-// Project dir env: GEMINI doesn't expose one — fall back to process.cwd().
+// See ADR-001 "Findings during Phase 1a" for hook-protocol rationale.
+
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import type {
   AgentAdapter,
@@ -25,35 +18,90 @@ import type {
   NormalizedHookInput,
 } from "./types.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const MARKER_START = "<!-- openwolf:start -->";
+const MARKER_END = "<!-- openwolf:end -->";
+
+function configDir(): string {
+  return path.join(os.homedir(), ".gemini");
+}
+
+function geminiMdPath(): string {
+  return path.join(configDir(), "GEMINI.md");
+}
+
+function readSnippet(): string {
+  const candidates = [
+    path.resolve(__dirname, "snippets", "openwolf-cross-agent.md"),
+    path.resolve(
+      __dirname,
+      "..",
+      "..",
+      "src",
+      "agents",
+      "snippets",
+      "openwolf-cross-agent.md",
+    ),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return fs.readFileSync(p, "utf-8");
+  }
+  return `${MARKER_START}\n## OpenWolf Protocol\n\nIf cwd has \`.wolf/\`, read \`.wolf/OPENWOLF.md\` and follow it.\n${MARKER_END}\n`;
+}
+
+function stripMarkerBlock(content: string): string {
+  const re = new RegExp(
+    `\\n*${escapeRegex(MARKER_START)}[\\s\\S]*?${escapeRegex(MARKER_END)}\\n*`,
+    "g",
+  );
+  return content.replace(re, "\n");
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export class GeminiAdapter implements AgentAdapter {
   readonly name = "gemini" as const;
   readonly projectDirEnvVar = "";
 
   detect(): boolean {
-    // ~/.gemini/ exists
-    throw new Error("not yet implemented");
+    return fs.existsSync(configDir());
   }
 
   async installGlobal(_opts: InstallOpts): Promise<void> {
-    // 1. Write ~/.gemini/openwolf-hook.sh
-    // 2. Patch ~/.gemini/settings.json hooks.BeforeTool[] matcher: "run_shell_command"
-    // 3. Append to ~/.gemini/GEMINI.md a @OPENWOLF.md reference
-    throw new Error("not yet implemented");
+    if (!this.detect()) {
+      throw new Error(`Gemini CLI not detected (~/.gemini does not exist).`);
+    }
+    const target = geminiMdPath();
+    const snippet = readSnippet();
+    let existing = "";
+    if (fs.existsSync(target)) {
+      existing = fs.readFileSync(target, "utf-8");
+    }
+    const stripped = stripMarkerBlock(existing).trimEnd();
+    const next = stripped
+      ? `${stripped}\n\n${snippet.trim()}\n`
+      : `${snippet.trim()}\n`;
+    fs.writeFileSync(target, next, "utf-8");
   }
 
   async uninstallGlobal(): Promise<void> {
-    throw new Error("not yet implemented");
+    const target = geminiMdPath();
+    if (!fs.existsSync(target)) return;
+    const existing = fs.readFileSync(target, "utf-8");
+    const stripped = stripMarkerBlock(existing);
+    fs.writeFileSync(target, stripped, "utf-8");
   }
 
   parseHookInput(stdin: string): NormalizedHookInput {
-    // Gemini CLI hook input shape — to be confirmed against actual stdin
-    // during Phase 1b live-test. Placeholder mirrors panda assumption.
     const raw = JSON.parse(stdin) as { tool_input?: { command?: string } };
     return { tool: "shell", command: raw.tool_input?.command, raw };
   }
 
   emitHookOutput(decision: HookDecision): string {
-    // Gemini hook output shape — TODO confirm. Placeholder: same as Codex.
     const out: Record<string, unknown> = {
       decision: decision.allow ? "allow" : "deny",
     };
