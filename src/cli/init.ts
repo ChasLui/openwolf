@@ -156,6 +156,7 @@ export async function initCommand(): Promise<void> {
     createdCount++;
   }
 
+  const newlyCreated = new Set<string>();
   for (const file of CREATE_IF_MISSING) {
     const destPath = path.join(wolfDir, file);
     if (fs.existsSync(destPath)) {
@@ -163,6 +164,7 @@ export async function initCommand(): Promise<void> {
     } else {
       writeTemplateFile(actualTemplatesDir, wolfDir, file);
       createdCount++;
+      newlyCreated.add(file);
     }
   }
 
@@ -170,6 +172,11 @@ export async function initCommand(): Promise<void> {
   if (!isUpgrade) {
     seedCerebrum(wolfDir, projectRoot);
     seedIdentity(wolfDir, projectRoot);
+  }
+
+  // --- STATUS.md: substitute {{PROJECT_NAME}} / {{DATE}} when freshly created ---
+  if (newlyCreated.has("STATUS.md")) {
+    seedStatus(wolfDir, projectRoot);
   }
 
   // --- Token ledger: set created_at only if empty ---
@@ -390,6 +397,19 @@ function seedCerebrum(wolfDir: string, projectRoot: string): void {
   }
   cerebrum = cerebrum.replace(/Last updated: —/, `Last updated: ${new Date().toISOString().slice(0, 10)}`);
   writeText(cerebrumPath, cerebrum);
+}
+
+function seedStatus(wolfDir: string, projectRoot: string): void {
+  const statusPath = path.join(wolfDir, "STATUS.md");
+  if (!fs.existsSync(statusPath)) return;
+
+  const projectName = detectProjectName(projectRoot) || path.basename(projectRoot);
+  const date = new Date().toISOString().slice(0, 10);
+
+  let content = readText(statusPath);
+  content = content.replace(/\{\{PROJECT_NAME\}\}/g, projectName);
+  content = content.replace(/\{\{DATE\}\}/g, date);
+  writeText(statusPath, content);
 }
 
 function seedIdentity(wolfDir: string, projectRoot: string): void {
