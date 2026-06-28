@@ -590,3 +590,25 @@ export function readStdin(): Promise<string> {
 export function normalizePath(p: string): string {
   return p.replace(/\\/g, "/");
 }
+
+/**
+ * Count non-mechanical semantic entries written to memory.md today.
+ * Mechanical entries (auto-generated file ops, session-end lines) don't count.
+ * Used by the stop hook to detect whether Claude wrote a meaningful summary.
+ */
+export function countSemanticEntries(wolfDir: string): number {
+  const memoryPath = path.join(wolfDir, "memory.md");
+  try {
+    const content = fs.readFileSync(memoryPath, "utf-8");
+    const mechanical = /^\|\s*[\d:]+\s*\|\s*(Created|Edited|Multi-edited|Session end:|designqc:)/;
+    const today = new Date().toISOString().slice(0, 10);
+    const todayPrefix = `| ${today}`;
+    let count = 0;
+    for (const line of content.split("\n")) {
+      if (line.startsWith(todayPrefix) && !mechanical.test(line)) count++;
+    }
+    return count;
+  } catch {
+    return 0;
+  }
+}

@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getWolfDir, ensureWolfDir, readJSON, writeJSON, appendMarkdown, timeShort } from "./shared.js";
+import { getWolfDir, ensureWolfDir, readJSON, writeJSON, appendMarkdown, timeShort, countSemanticEntries } from "./shared.js";
 
 interface FileRead {
   count: number;
@@ -80,11 +80,12 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Check for files edited many times without a buglog entry
-  checkForMissingBugLogs(wolfDir, session);
-
-  // Check if cerebrum was updated this session (it should be if there were edits)
-  checkCerebrumFreshness(wolfDir, session);
+  // Collect end-of-turn reminders — returned as strings, then surfaced via additionalContext
+  const reminders = [
+    checkForMissingBugLogs(wolfDir, session),
+    checkCerebrumFreshness(wolfDir, session),
+    checkSemanticSummaries(wolfDir, session),
+  ].filter((r): r is string => r !== null);
 
   // Build session entry for ledger
   const reads = Object.entries(session.files_read).map(([file, data]) => ({
@@ -174,53 +175,72 @@ async function main(): Promise<void> {
 
   writeJSON(sessionFile, session);
 
+  // Surface reminders via additionalContext so they appear in Claude's next context window.
+  // Using process.stdout JSON is the only reliable way for Stop hooks to inject content
+  // into Claude Code's context — process.stderr output goes to the terminal only.
+  if (reminders.length > 0) {
+    const additionalContext = `⚠️ OpenWolf end-of-turn reminders:\n${reminders.map(r => `• ${r}`).join("\n")}`;
+    process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "Stop", additionalContext } }));
+  }
+
   process.exit(0);
 }
 
 /**
  * Check if files were edited multiple times but buglog.json wasn't updated.
- * Emit a stderr reminder so Claude sees it in the next turn.
+ * Returns a reminder string if action is needed, otherwise null.
  */
-function checkForMissingBugLogs(wolfDir: string, session: SessionData): void {
-  if (!session.edit_counts) return;
+function checkForMissingBugLogs(wolfDir: string, session: SessionData): string | null {
+  if (!session.edit_counts) return null;
 
   const multiEditFiles = Object.entries(session.edit_counts)
     .filter(([, count]) => count >= 3)
     .map(([file]) => path.basename(file));
 
-  if (multiEditFiles.length === 0) return;
+  if (multiEditFiles.length === 0) return null;
 
-  // Check if buglog was written to this session
   const buglogWritten = session.files_written.some(w =>
     w.file.includes("buglog.json")
   );
 
   if (!buglogWritten) {
-    process.stderr.write(
-      `⚠️ OpenWolf: Files edited 3+ times this session (${multiEditFiles.join(", ")}) but buglog.json was not updated. If you fixed bugs, please log them.\n`
-    );
+    return `ACTION REQUIRED: Files edited 3+ times this session (${multiEditFiles.join(", ")}) but buglog.json was not updated. Log the bug fixes to .wolf/buglog.json now.`;
   }
+  return null;
 }
 
 /**
  * Check if cerebrum.md was updated recently. If it hasn't been updated in
- * a while and there was significant activity, emit a gentle reminder.
+ * a while and there was significant activity, return a reminder.
  */
-function checkCerebrumFreshness(wolfDir: string, session: SessionData): void {
+function checkCerebrumFreshness(wolfDir: string, session: SessionData): string | null {
   const cerebrumPath = path.join(wolfDir, "cerebrum.md");
   try {
     const stat = fs.statSync(cerebrumPath);
     const hoursSinceUpdate = (Date.now() - stat.mtimeMs) / (1000 * 60 * 60);
 
-    // If cerebrum hasn't been updated in 24h+ and there were significant writes
     if (hoursSinceUpdate > 24 && session.files_written.length >= 3) {
-      process.stderr.write(
-        `💡 OpenWolf: cerebrum.md hasn't been updated in ${Math.floor(hoursSinceUpdate)}h. Did you learn any user preferences, conventions, or gotchas this session? Consider updating .wolf/cerebrum.md.\n`
-      );
+      return `ACTION REQUIRED: cerebrum.md hasn't been updated in ${Math.floor(hoursSinceUpdate)}h and ${session.files_written.length} files were modified. Update .wolf/cerebrum.md with any new user preferences, conventions, or gotchas discovered this session.`;
     }
   } catch {
     // cerebrum.md doesn't exist, that's ok
   }
+  return null;
+}
+
+/**
+ * Check if a semantic summary was written to memory.md this session.
+ * Returns a reminder string if action is needed, otherwise null.
+ */
+function checkSemanticSummaries(wolfDir: string, session: SessionData): string | null {
+  const writeCount = session.files_written.length;
+  if (writeCount < 2) return null;
+
+  const semanticCount = countSemanticEntries(wolfDir);
+  if (semanticCount === 0) {
+    return `ACTION REQUIRED: ${writeCount} files were modified this session but no semantic summary was written to memory.md. Append a one-line summary: | HH:MM | description | file(s) | outcome | ~tokens |`;
+  }
+  return null;
 }
 
 main().catch(() => process.exit(0));
