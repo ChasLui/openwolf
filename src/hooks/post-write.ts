@@ -56,6 +56,11 @@ async function main(): Promise<void> {
   const relPath = normalizePath(path.relative(projectRoot, absolutePath));
   if (relPath.startsWith(".wolf/")) { process.exit(0); return; }
 
+  // Never track files outside the project root (e.g. the Claude Code scratchpad under
+  // /private/tmp). path.relative() yields ../.. section keys that pollute anatomy.md and are
+  // wiped again by every full `openwolf scan`, so the index churns instead of converging.
+  if (relPath.startsWith("..")) { process.exit(0); return; }
+
   // Never track .env files in anatomy — they contain secrets
   const baseName = path.basename(absolutePath);
   if (baseName === ".env" || baseName.startsWith(".env.")) { process.exit(0); return; }
