@@ -6,6 +6,17 @@ import {
   extractDescription, estimateTokens, appendMarkdown, timeShort, readStdin, normalizePath
 } from "./shared.js";
 
+// File types where a value/string change is normal content editing, not a bug
+// fix — auto bug detection never runs on these (see autoDetectBugFix). Without
+// this, a version bump in a README or a key change in a JSON/YAML config is
+// logged as a "wrong-value" bug, since the detector matches quoted spans
+// (including markdown backticks) regardless of file type.
+const NON_CODE_EXTS = new Set([
+  ".md", ".mdx", ".markdown", ".txt", ".rst", ".adoc",
+  ".json", ".jsonc", ".yaml", ".yml", ".toml", ".ini", ".env",
+  ".lock", ".csv", ".tsv",
+]);
+
 interface SessionData {
   files_written: Array<{ file: string; action: string; tokens: number; at: string }>;
   edit_counts: Record<string, number>;
@@ -288,12 +299,31 @@ function extractCalls(code: string): string[] {
 
 // ─── Auto Bug Detection ──────────────────────────────────────────
 
+function bugAutoDetectEnabled(wolfDir: string): boolean {
+  try {
+    const cfg = readJSON<{ openwolf?: { buglog?: { auto_detect?: boolean } } }>(
+      path.join(wolfDir, "config.json"),
+      {}
+    );
+    // Default on; only an explicit `false` disables auto bug detection.
+    return cfg.openwolf?.buglog?.auto_detect !== false;
+  } catch {
+    return true;
+  }
+}
+
 function autoDetectBugFix(wolfDir: string, absolutePath: string, projectRoot: string, oldStr: string, newStr: string): void {
+  const basename = path.basename(absolutePath);
+  const ext = path.extname(basename).toLowerCase();
+
+  // Bug-fix detection is a code concept — never fire on prose/docs/data files.
+  if (NON_CODE_EXTS.has(ext)) return;
+  // Respect an explicit opt-out in .wolf/config.json (default: enabled).
+  if (!bugAutoDetectEnabled(wolfDir)) return;
+
   const bugLogPath = path.join(wolfDir, "buglog.json");
   const bugLog = readJSON<BugLog>(bugLogPath, { version: 1, bugs: [] });
   const relFile = normalizePath(path.relative(projectRoot, absolutePath));
-  const basename = path.basename(absolutePath);
-  const ext = path.extname(basename).toLowerCase();
 
   // Detect what kind of fix this is
   const detection = detectFixPattern(oldStr, newStr, ext);
