@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getWolfDir, ensureWolfDir, readJSON, writeJSON, appendMarkdown, timeShort, countSemanticEntries, readStdin, readTranscriptUsage, type RealUsage } from "./shared.js";
+import { getWolfDir, ensureWolfDir, readJSON, writeJSON, appendMarkdown, timeShort, countSemanticEntries, readStdin, readTranscriptUsage, detectAgent, type RealUsage } from "./shared.js";
 
 interface FileRead {
   count: number;
@@ -30,6 +30,7 @@ interface SessionData {
 
 interface SessionEntry {
   id: string;
+  agent: string;
   started: string;
   ended: string;
   reads: Array<{
@@ -115,6 +116,7 @@ async function main(): Promise<void> {
 
   const sessionEntry: SessionEntry = {
     id: session.session_id,
+    agent: detectAgent(),
     started: session.started,
     ended: new Date().toISOString(),
     reads,

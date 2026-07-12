@@ -18,6 +18,13 @@ export function getWolfDir(): string {
   return path.join(getProjectDir(), ".wolf");
 }
 
+/** Which agent harness invoked this hook — used for per-agent ledger attribution. */
+export function detectAgent(): string {
+  if (process.env.CLAUDE_PROJECT_DIR) return "claude";
+  if (process.env.CODEX_PROJECT_ROOT) return "codex";
+  return "default";
+}
+
 /**
  * Bail out silently if .wolf/ directory doesn't exist in the current project.
  * Call this at the top of every hook to avoid crashes in non-OpenWolf projects.

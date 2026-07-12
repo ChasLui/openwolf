@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { execFileSync } from "node:child_process";
-import { getWolfDir, ensureWolfDir, writeJSON, appendMarkdown, readJSON, timestamp, timeShort, estimateTokens, readStdin } from "./shared.js";
+import { getWolfDir, ensureWolfDir, writeJSON, appendMarkdown, readJSON, timestamp, timeShort, estimateTokens, readStdin, detectAgent } from "./shared.js";
 
 // ─── Session digest (Workstream E/F: model-aware context budgeting) ─────────
 //
@@ -13,12 +13,6 @@ import { getWolfDir, ensureWolfDir, writeJSON, appendMarkdown, readJSON, timesta
 interface ContextConfig {
   session_digest_budget_tokens?: number;
   budgets?: Record<string, number>;
-}
-
-function detectAgent(): string {
-  if (process.env.CLAUDE_PROJECT_DIR) return "claude";
-  if (process.env.CODEX_PROJECT_ROOT) return "codex";
-  return "default";
 }
 
 function digestBudget(wolfDir: string): number {

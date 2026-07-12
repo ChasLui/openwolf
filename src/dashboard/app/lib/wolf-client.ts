@@ -13,9 +13,10 @@ export function getDashboardToken(): string {
   return sessionStorage.getItem("openwolf-dashboard-token") || "";
 }
 
-export function dashboardFetch(path: string): Promise<Response> {
+export function dashboardFetch(path: string, init?: RequestInit): Promise<Response> {
   return fetch(path, {
-    headers: { Authorization: `Bearer ${getDashboardToken()}` },
+    ...init,
+    headers: { ...(init?.headers ?? {}), Authorization: `Bearer ${getDashboardToken()}` },
   });
 }
 
