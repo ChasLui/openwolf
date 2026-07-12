@@ -1,55 +1,55 @@
 # STATUS — {{PROJECT_NAME}}
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
-> Update this file at the end of every quest so the next `/clear` resumes in 1 read.
+> Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
 > Last updated: {{DATE}}
 
 ---
 
-## ✅ Concluído
+## ✅ Done
 
-<!-- Move items here from "🚀 Próxima fase" when finished. Group by area. -->
+<!-- Move items here from "🚀 Next phase" when finished. Group by area. -->
 
-- (nothing yet — fill in as quests complete)
+- (nothing yet — fill in as work completes)
 
 ---
 
-## 🚀 Próxima fase
+## 🚀 Next phase
 
-**Objetivo:** _<what we're building next, in 1 sentence>_
+**Goal:** _<what we're building next, in 1 sentence>_
 
-### Critérios de aceitação
+### Acceptance criteria
 1. _<concrete user-visible outcome>_
 2. _<...>_
 
-### Arquivos a criar / editar
-| Tipo | Arquivo | Conteúdo |
+### Files to create / edit
+| Type | File | Content |
 |---|---|---|
-| novo | `path/to/file.ts` | _what it does_ |
+| new | `path/to/file.ts` | _what it does_ |
 
-### Decisões fechadas
+### Closed decisions
 - _<choice + reasoning>_
 
-### Decisões pendentes
+### Open decisions
 - _<question to ask the user before coding>_
 
 ---
 
-## 📁 Arquitetura ativa
+## 📁 Active architecture
 
 - **Stack:** _<frameworks, libraries, runtime>_
-- **Tabelas / módulos chave:** _<list>_
-- **Padrões:** _<conventions enforced project-wide>_
+- **Key tables / modules:** _<list>_
+- **Patterns:** _<conventions enforced project-wide>_
 
 ---
 
-## ⚠️ Pendências externas (não bloqueia coding)
+## ⚠️ External blockers (don't block coding)
 
 - _<env vars, secrets, external accounts, manual steps>_
 
 ---
 
-## 🔧 Comandos úteis
+## 🔧 Useful commands
 
 ```bash
 # add the most-used commands here so the next session has them ready
@@ -57,7 +57,7 @@
 
 ---
 
-## 📚 Referências (leia SE precisar)
+## 📚 References (read IF needed)
 
 - `.wolf/cerebrum.md` — User Preferences + Do-Not-Repeat + Decision Log
 - `.wolf/anatomy.md` — token-efficient file index
