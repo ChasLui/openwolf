@@ -5,13 +5,14 @@ import { fileURLToPath } from "node:url";
 import { fork } from "node:child_process";
 import { findProjectRoot } from "../scanner/project-root.js";
 import { readJSON } from "../utils/fs-safe.js";
+import { getDashboardToken } from "../utils/dashboard-auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 interface WolfConfig {
   openwolf: {
-    dashboard: { port: number };
+    dashboard: { port: number; host?: string };
   };
 }
 
@@ -49,7 +50,10 @@ export async function dashboardCommand(): Promise<void> {
   });
 
   const port = config.openwolf.dashboard.port;
-  const url = `http://localhost:${port}`;
+  const host = config.openwolf.dashboard.host || "127.0.0.1";
+  const displayHost = host === "0.0.0.0" ? "localhost" : host;
+  const token = getDashboardToken(wolfDir);
+  const url = `http://${displayHost}:${port}/?token=${encodeURIComponent(token)}`;
 
   // Check if daemon is already running on that port
   const running = await isPortOpen(port);
