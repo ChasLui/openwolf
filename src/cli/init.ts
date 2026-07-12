@@ -46,7 +46,6 @@ const CREATE_IF_MISSING = [
   "buglog.json",
   "cron-manifest.json",
   "cron-state.json",
-  "designqc-report.json",
   "suggestions.json",
 ];
 
@@ -434,7 +433,7 @@ function readTemplateContent(filename: string, templatesDir: string): string {
 function getEmbeddedTemplate(filename: string): string {
   const templates: Record<string, string> = {
     "claude-md-snippet.md": `# OpenWolf\n\n@.wolf/OPENWOLF.md\n\nThis project uses OpenWolf for context management. Read and follow .wolf/OPENWOLF.md every session. Check .wolf/cerebrum.md before generating code. Check .wolf/anatomy.md before reading files.`,
-    "claude-rules-openwolf.md": `---\ndescription: OpenWolf protocol enforcement — active on all files\nglobs: **/*\n---\n\n- Read .wolf/STATUS.md FIRST when resuming a session — it contains current quest, next steps, decisions\n- Update .wolf/STATUS.md (✅ done / 🚀 next quest) when a quest finishes or before suggesting /clear\n- Check .wolf/anatomy.md before reading any project file\n- Check .wolf/cerebrum.md Do-Not-Repeat list before generating code\n- After writing or editing files, update .wolf/anatomy.md and append to .wolf/memory.md\n- After receiving a user correction, update .wolf/cerebrum.md immediately (Preferences, Learnings, or Do-Not-Repeat)\n- LEARN from every interaction: if you discover a convention, user preference, or project pattern, add it to .wolf/cerebrum.md. Low threshold — when in doubt, log it.\n- BEFORE fixing any bug or error: read .wolf/buglog.json for known fixes\n- AFTER fixing any bug, error, failed test, failed build, or user-reported problem: ALWAYS log to .wolf/buglog.json with error_message, root_cause, fix, and tags\n- If you edit a file more than twice in a session, that likely indicates a bug — log it to .wolf/buglog.json\n- When the user asks to check/evaluate UI design: run \`openwolf designqc\` to capture screenshots, then read them from .wolf/designqc-captures/\n- When the user asks to change/pick/migrate UI framework: read .wolf/reframe-frameworks.md, ask decision questions, recommend a framework, then execute with the framework's prompt`,
+    "claude-rules-openwolf.md": `---\ndescription: OpenWolf protocol enforcement — active on all files\nglobs: **/*\n---\n\n- Read .wolf/STATUS.md FIRST when resuming a session — it contains current quest, next steps, decisions\n- Update .wolf/STATUS.md (✅ done / 🚀 next quest) when a quest finishes or before suggesting /clear\n- Check .wolf/anatomy.md before reading any project file\n- Check .wolf/cerebrum.md Do-Not-Repeat list before generating code\n- After writing or editing files, update .wolf/anatomy.md and append to .wolf/memory.md\n- After receiving a user correction, update .wolf/cerebrum.md immediately (Preferences, Learnings, or Do-Not-Repeat)\n- LEARN from every interaction: if you discover a convention, user preference, or project pattern, add it to .wolf/cerebrum.md. Low threshold — when in doubt, log it.\n- BEFORE fixing any bug or error: read .wolf/buglog.json for known fixes\n- AFTER fixing any bug, error, failed test, failed build, or user-reported problem: ALWAYS log to .wolf/buglog.json with error_message, root_cause, fix, and tags\n- If you edit a file more than twice in a session, that likely indicates a bug — log it to .wolf/buglog.json\n- When the user asks to change/pick/migrate UI framework: read .wolf/reframe-frameworks.md, ask decision questions, recommend a framework, then execute with the framework's prompt`,
   };
   return templates[filename] ?? "";
 }
@@ -459,7 +458,6 @@ function generateTemplate(destPath: string, file: string): void {
         context: { session_digest_budget_tokens: 1500, budgets: { claude: 1500, codex: 1200, gemini: 1200, opencode: 1200, cursor: 800 } },
         daemon: { port: 18790, log_level: "info" },
         dashboard: { enabled: true, port: 18791, host: "127.0.0.1" },
-        designqc: { enabled: true, viewports: [{ name: "desktop", width: 1440, height: 900 }, { name: "mobile", width: 375, height: 812 }], max_screenshots: 6, chrome_path: null },
         buglog: { auto_detect: true },
       },
     }, null, 2),
@@ -467,7 +465,6 @@ function generateTemplate(destPath: string, file: string): void {
     "buglog.json": JSON.stringify({ version: 1, bugs: [] }, null, 2),
     "cron-manifest.json": JSON.stringify({ version: 1, tasks: [] }, null, 2),
     "cron-state.json": JSON.stringify({ last_heartbeat: null, engine_status: "initialized", execution_log: [], dead_letter_queue: [], upcoming: [] }, null, 2),
-    "designqc-report.json": JSON.stringify({ captured_at: null, captures: [], total_size_kb: 0, estimated_tokens: 0 }, null, 2),
     "suggestions.json": JSON.stringify({ suggestions: [], generated_at: null }, null, 2),
   };
 

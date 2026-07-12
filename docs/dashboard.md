@@ -87,42 +87,6 @@ Searchable bug database from `buglog.json`. Each bug expands to show:
 
 Quick-filter by clicking common tags.
 
-### Design QC
-
-Shows the status of the design QC capture system for visual regression and design review.
-
-**Status indicators:**
-- **Capture status**: whether the capture service is active or idle
-- **Last capture time**: timestamp of the most recent screenshot
-- **Screenshot count**: total captures taken in the current session
-- **Total size**: disk space used by captured screenshots
-
-**How it works:**
-
-Design QC follows a three-step workflow:
-
-1. **Capture**: OpenWolf takes viewport-height sectioned screenshots of your running dev server, scrolling through the full page.
-2. **Evaluate**: Claude reviews the screenshots against your design specs or general UI/UX best practices.
-3. **Fix**: Claude suggests or applies code changes based on the evaluation.
-
-The panel includes instructions for invoking Design QC with Claude. Use `openwolf designqc` from the CLI or trigger captures from this panel.
-
-### AI Insights
-
-AI-generated suggestions displayed in four cards:
-- **Achievements** (emerald): what was accomplished
-- **Improvements** (blue): code quality suggestions
-- **Next Tasks** (amber): recommended next steps
-- **Risks** (red): technical debt and risk items
-
-Includes a **Regenerate** button that triggers the `project-suggestions` cron task.
-
-Generated weekly using `claude -p` via your Claude subscription. You can trigger manually from the dashboard or via:
-
-```bash
-openwolf cron run project-suggestions
-```
-
 ## Design
 
 - **Dark/light theme** with toggle in the sidebar (preference saved in localStorage)

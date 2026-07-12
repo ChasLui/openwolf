@@ -190,21 +190,11 @@ openwolf daemon logs       View scheduler logs
 openwolf cron list         Show all scheduled tasks
 openwolf cron run <id>     Trigger a task manually
 openwolf cron retry <id>   Retry a dead-lettered task
-openwolf designqc          Capture full-page screenshots for design evaluation
+openwolf report            Token report: estimated vs measured usage
 openwolf bug search <term> Search bug memory for known fixes
 openwolf update            Update all registered projects to latest version
 openwolf restore [backup]  Restore .wolf/ from a timestamped backup
 ```
-
-## Design QC
-
-Capture full-page screenshots of your running app and let Claude evaluate the design.
-
-```bash
-openwolf designqc
-```
-
-Auto-detects your dev server, captures viewport-height JPEG sections of every route, and saves them to `.wolf/designqc-captures/`. Then tell Claude to read the screenshots and evaluate. Requires `puppeteer-core`.
 
 ## Reframe
 
@@ -239,7 +229,6 @@ OpenWolf is not an AI wrapper. It is 6 hook scripts and a `.wolf/` directory. It
 - Claude Code CLI
 - Windows, macOS, or Linux
 - Optional: PM2 for persistent background tasks
-- Optional: `puppeteer-core` for Design QC screenshots
 
 ## Limitations
 
@@ -258,10 +247,10 @@ OpenWolf is better because people fixed it. Every merged contribution is credite
 
 | | | | | |
 |:-:|:-:|:-:|:-:|:-:|
-| [<img src="https://github.com/fsener.png" width="60"/>](https://github.com/fsener)<br/>**fsener**<br/><sub>CRLF anatomy fix (#24)</sub> | [<img src="https://github.com/albertomenache.png" width="60"/>](https://github.com/albertomenache)<br/>**albertomenache**<br/><sub>CRLF root-cause (#50, #51)</sub> | [<img src="https://github.com/whydoyouwork.png" width="60"/>](https://github.com/whydoyouwork)<br/>**whydoyouwork**<br/><sub>config deep-merge (#27)</sub> | [<img src="https://github.com/mann1x.png" width="60"/>](https://github.com/mann1x)<br/>**mann1x**<br/><sub>port preservation (#38)</sub> | [<img src="https://github.com/GordongWang.png" width="60"/>](https://github.com/GordongWang)<br/>**GordongWang**<br/><sub>null-safe bug search (#44)</sub> |
-| [<img src="https://github.com/WeathermanTony.png" width="60"/>](https://github.com/WeathermanTony)<br/>**WeathermanTony**<br/><sub>WSL2 EPERM fix (#33)</sub> | [<img src="https://github.com/goashem.png" width="60"/>](https://github.com/goashem)<br/>**goashem**<br/><sub>anatomy scope guard (#56)</sub> | [<img src="https://github.com/bryandent.png" width="60"/>](https://github.com/bryandent)<br/>**bryandent**<br/><sub>buglog noise fix (#57), secret redaction (#54)</sub> | [<img src="https://github.com/levnikmyskin.png" width="60"/>](https://github.com/levnikmyskin)<br/>**levnikmyskin**<br/><sub>Dart support (#10)</sub> | [<img src="https://github.com/svanack404.png" width="60"/>](https://github.com/svanack404)<br/>**svanack404**<br/><sub>security overhaul (#30)</sub> |
-| [<img src="https://github.com/riverwolf67.png" width="60"/>](https://github.com/riverwolf67)<br/>**riverwolf67**<br/><sub>security audit + tests (#34)</sub> | [<img src="https://github.com/nottyjay.png" width="60"/>](https://github.com/nottyjay)<br/>**nottyjay**<br/><sub>Codex integration (#36)</sub> | [<img src="https://github.com/alfasin.png" width="60"/>](https://github.com/alfasin)<br/>**alfasin**<br/><sub>OpenCode plugin (#9)</sub> | [<img src="https://github.com/ChasLui.png" width="60"/>](https://github.com/ChasLui)<br/>**ChasLui**<br/><sub>adapter architecture (#39)</sub> | [<img src="https://github.com/JarrodAI.png" width="60"/>](https://github.com/JarrodAI)<br/>**JarrodAI**<br/><sub>additionalContext (#55)</sub> |
-| [<img src="https://github.com/meketreve.png" width="60"/>](https://github.com/meketreve)<br/>**meketreve**<br/><sub>STATUS.md handoff (#40)</sub> | | | | |
+| [<img src="https://github.com/fsener.png" width="60"/>](https://github.com/fsener)<br/>**fsener** | [<img src="https://github.com/albertomenache.png" width="60"/>](https://github.com/albertomenache)<br/>**albertomenache** | [<img src="https://github.com/whydoyouwork.png" width="60"/>](https://github.com/whydoyouwork)<br/>**whydoyouwork** | [<img src="https://github.com/mann1x.png" width="60"/>](https://github.com/mann1x)<br/>**mann1x** | [<img src="https://github.com/GordongWang.png" width="60"/>](https://github.com/GordongWang)<br/>**GordongWang** |
+| [<img src="https://github.com/WeathermanTony.png" width="60"/>](https://github.com/WeathermanTony)<br/>**WeathermanTony** | [<img src="https://github.com/goashem.png" width="60"/>](https://github.com/goashem)<br/>**goashem** | [<img src="https://github.com/bryandent.png" width="60"/>](https://github.com/bryandent)<br/>**bryandent** | [<img src="https://github.com/levnikmyskin.png" width="60"/>](https://github.com/levnikmyskin)<br/>**levnikmyskin** | [<img src="https://github.com/svanack404.png" width="60"/>](https://github.com/svanack404)<br/>**svanack404** |
+| [<img src="https://github.com/riverwolf67.png" width="60"/>](https://github.com/riverwolf67)<br/>**riverwolf67** | [<img src="https://github.com/nottyjay.png" width="60"/>](https://github.com/nottyjay)<br/>**nottyjay** | [<img src="https://github.com/alfasin.png" width="60"/>](https://github.com/alfasin)<br/>**alfasin** | [<img src="https://github.com/ChasLui.png" width="60"/>](https://github.com/ChasLui)<br/>**ChasLui** | [<img src="https://github.com/JarrodAI.png" width="60"/>](https://github.com/JarrodAI)<br/>**JarrodAI** |
+| [<img src="https://github.com/meketreve.png" width="60"/>](https://github.com/meketreve)<br/>**meketreve** | | | | |
 
 ## License
 

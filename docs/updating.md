@@ -89,7 +89,6 @@ Every backup is a full copy of `.wolf/` at the time of the update. This includes
 | `memory.md` | User data |
 | `buglog.json` | User data |
 | `anatomy.md` | User data |
-| `designqc-captures/*` | Generated |
 | Any custom files in `.wolf/` | User data |
 
 Backups are stored alongside the project and named by timestamp for easy identification.

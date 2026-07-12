@@ -13,7 +13,6 @@ const navItems = [
   { id: "anatomy", label: "Anatomy", icon: "⊞" },
   { id: "bugs", label: "Bug Log", icon: "⚑" },
   { id: "suggestions", label: "AI Insights", icon: "✦" },
-  { id: "designqc", label: "Design QC", icon: "🎨" },
 ];
 
 interface SidebarProps {

@@ -19,7 +19,6 @@ Every OpenWolf project has a `.wolf/` folder containing:
 | `cron-manifest.json` | Scheduled task definitions |
 | `cron-state.json` | Cron execution state and dead letter queue |
 | `suggestions.json` | AI-generated project improvement suggestions |
-| `designqc-report.json` | Design QC capture metadata and results |
 | `reframe-frameworks.md` | UI framework knowledge base for Reframe |
 
 **Markdown is source of truth** for human-readable state. JSON is for machine-readable state only.
@@ -84,13 +83,11 @@ Design QC is a capture-only tool. It takes screenshots; Claude does the evaluati
 
 ### How it works
 
-1. **Dev server detection** -- `openwolf designqc` checks common ports (3000, 5173, 4321, 8080) for a running dev server. If none is found, it starts one automatically using `npm run dev`, `pnpm dev`, or whatever start script your project defines.
 
 2. **Route detection** -- OpenWolf scans your project for route files (Next.js `app/` routes, file-based routers, etc.) and builds a list of pages to capture. You can also specify routes manually with `--routes`.
 
 3. **Sectioned screenshots** -- Each page is captured as full-page sectioned images at desktop (1440x900) and mobile (375x812) viewports. Pages are split into viewport-height sections rather than one giant screenshot. This produces images that fit within Claude's vision token budget.
 
-4. **Output** -- Screenshots are saved to `.wolf/designqc-captures/`. A report is written to `.wolf/designqc-report.json` with metadata (routes, viewports, file sizes, estimated token cost).
 
 5. **Evaluation** -- You ask Claude to read the screenshots and evaluate the design. Claude uses its vision capabilities to assess layout, spacing, typography, color, responsiveness, and overall design quality. The evaluation happens inline in your conversation -- no external service needed.
 

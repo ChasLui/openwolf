@@ -16,7 +16,6 @@ OpenWolf is configured via `.wolf/config.json`. All settings have sensible defau
     "cerebrum": { ... },
     "daemon": { ... },
     "dashboard": { ... },
-    "designqc": { ... }
   }
 }
 ```
@@ -108,33 +107,3 @@ Controls the web dashboard.
 ::: tip
 The dashboard port is also the daemon's HTTP server port for the web UI. Change this if 18791 conflicts with another service.
 :::
-
-## `designqc`
-
-Controls the design QC screenshot capture system used by [`openwolf designqc`](/commands#openwolf-designqc).
-
-| Key | Default | Description |
-|-----|---------|-------------|
-| `enabled` | `true` | Enable design QC features |
-| `viewports` | `[{desktop: 1440x900}, {mobile: 375x812}]` | Capture viewports. Each entry has `name`, `width`, and `height` |
-| `max_screenshots` | `6` | Maximum screenshots per run |
-| `chrome_path` | `null` | Custom Chrome or Edge executable path. Auto-detected if `null` |
-
-**Default viewports:**
-
-```json
-[
-  { "name": "desktop", "width": 1440, "height": 900 },
-  { "name": "mobile", "width": 375, "height": 812 }
-]
-```
-
-Set `chrome_path` if auto-detection fails or you want to use a specific browser installation:
-
-```json
-{
-  "designqc": {
-    "chrome_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-  }
-}
-```

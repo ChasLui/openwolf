@@ -33,13 +33,6 @@ interface CronManifest {
   tasks: any[];
 }
 
-interface DesignQCReport {
-  captured_at: string | null;
-  captures: any[];
-  total_size_kb: number;
-  estimated_tokens: number;
-}
-
 interface Health {
   status: string;
   uptime_seconds: number;
@@ -60,7 +53,6 @@ export interface WolfData {
   cronManifest: CronManifest;
   buglog: BugLog;
   suggestions: any;
-  designqcReport: DesignQCReport | null;
   health: Health;
   identity: { name: string; role: string };
   project: ProjectMeta;
@@ -78,7 +70,6 @@ export function useWolfData(): WolfData {
   const [cronManifest, setCronManifest] = useState<CronManifest>({ tasks: [] });
   const [buglog, setBuglog] = useState<BugLog>({ bugs: [] });
   const [suggestions, setSuggestions] = useState<any>(null);
-  const [designqcReport, setDesignqcReport] = useState<DesignQCReport | null>(null);
   const [health, setHealth] = useState<Health>({ status: "unknown", uptime_seconds: 0 });
   const [identity, setIdentity] = useState({ name: "Wolf", role: "AI development assistant" });
   const [project, setProject] = useState<ProjectMeta>({ name: "", description: "", root: "" });
@@ -102,9 +93,6 @@ export function useWolfData(): WolfData {
     }
     if (files["suggestions.json"]) {
       try { setSuggestions(JSON.parse(files["suggestions.json"])); } catch {}
-    }
-    if (files["designqc-report.json"]) {
-      try { setDesignqcReport(JSON.parse(files["designqc-report.json"])); } catch {}
     }
     if (files["identity.md"]) {
       const nameMatch = files["identity.md"].match(/\*\*Name:\*\*\s*(.+)/);
@@ -158,5 +146,5 @@ export function useWolfData(): WolfData {
     return () => wsClient.disconnect();
   }, [processFiles]);
 
-  return { anatomy, cerebrum, memory, tokenLedger, cronState, cronManifest, buglog, suggestions, designqcReport, health, identity, project, loading, client };
+  return { anatomy, cerebrum, memory, tokenLedger, cronState, cronManifest, buglog, suggestions, health, identity, project, loading, client };
 }

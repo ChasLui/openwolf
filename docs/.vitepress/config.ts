@@ -108,7 +108,6 @@ export default defineConfig({
       {
         text: "Features",
         items: [
-          { text: "Design QC", link: "/designqc" },
           { text: "Reframe", link: "/reframe" },
         ],
       },

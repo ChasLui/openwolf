@@ -129,32 +129,6 @@ openwolf cron run project-suggestions
 If you have `ANTHROPIC_API_KEY` set in your environment, OpenWolf automatically strips it when running AI tasks so that `claude -p` uses your subscription credentials from `~/.claude/.credentials.json` instead. This prevents "Credit balance is too low" errors when your API key has no credits but your subscription is active.
 :::
 
-## Design QC
-
-Design QC captures full-page sectioned screenshots of your running app so Claude can evaluate the design. It requires `puppeteer-core` and a Chrome/Chromium installation:
-
-```bash
-npm install -g puppeteer-core
-```
-
-Then run:
-
-```bash
-openwolf designqc
-```
-
-OpenWolf will auto-detect (or start) your dev server, detect routes from your project structure, and capture screenshots at desktop (1440px) and mobile (375px) viewports. Screenshots are saved to `.wolf/designqc-captures/`.
-
-After capture, tell Claude:
-
-> Read the screenshots in `.wolf/designqc-captures/` and evaluate the design.
-
-Claude reads the images directly and provides inline feedback. No external design tools or services needed.
-
-::: tip Options
-Use `--url http://localhost:3000` to specify a dev server URL manually. Use `--desktop-only` to skip mobile captures. Use `--routes /,/about,/pricing` to capture specific routes.
-:::
-
 ## Reframe
 
 Need help choosing a UI component framework? Just ask Claude:

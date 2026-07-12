@@ -172,7 +172,6 @@ app.get("/api/files", (_req, res) => {
     "OPENWOLF.md", "identity.md", "cerebrum.md", "memory.md", "anatomy.md",
     "config.json", "token-ledger.json", "buglog.json",
     "cron-manifest.json", "cron-state.json",
-    "designqc-report.json",
   ];
   for (const file of wolfFiles) {
     try {
@@ -188,11 +187,6 @@ app.get("/api/files", (_req, res) => {
     files["suggestions.json"] = "";
   }
   res.json(files);
-});
-
-app.get("/api/designqc-report", (_req, res) => {
-  const report = readJSON(path.join(wolfDir, "designqc-report.json"), null);
-  res.json(report);
 });
 
 // Trigger a cron task by ID
@@ -314,7 +308,6 @@ function handleDashboardCommand(msg: { type: string; task_id?: string }): void {
           "OPENWOLF.md", "identity.md", "cerebrum.md", "memory.md", "anatomy.md",
           "config.json", "token-ledger.json", "buglog.json",
           "cron-manifest.json", "cron-state.json",
-          "designqc-report.json",
         ];
         for (const file of wolfFiles) {
           try {

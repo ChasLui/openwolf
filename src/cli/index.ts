@@ -148,20 +148,6 @@ export function createProgram(): Command {
       restoreCommand(backup);
     });
 
-  // --- Design QC command ---
-  program
-    .command("designqc [target]")
-    .description("Capture full-page screenshots for design evaluation by Claude Code")
-    .option("--url <url>", "Dev server URL (auto-starts server if omitted)")
-    .option("--routes <routes...>", "Specific routes to check")
-    .option("--quality <n>", "JPEG quality 1-100 (lower = fewer tokens)", "70")
-    .option("--max-width <n>", "Max capture width in px", "1200")
-    .option("--desktop-only", "Skip mobile viewport captures")
-    .action(async (target: string | undefined, opts: { url?: string; routes?: string[]; quality?: string; maxWidth?: string; desktopOnly?: boolean }) => {
-      const { designqcCommand } = await import("./designqc-cmd.js");
-      await designqcCommand(target, opts);
-    });
-
   // --- Bug command ---
   const bug = program
     .command("bug")

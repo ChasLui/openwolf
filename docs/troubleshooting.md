@@ -142,9 +142,7 @@ openwolf scan
 
 If files are missing, adjust the exclude patterns. The defaults skip `node_modules`, `.git`, `dist`, `build`, and similar directories.
 
-## designqc: Chrome/Edge not found
 
-**Symptom:** Running `openwolf designqc` shows "Chrome/Edge not found".
 
 **Cause:** Design QC uses `puppeteer-core` which requires an existing browser installation. It does not bundle its own browser.
 
@@ -152,21 +150,17 @@ If files are missing, adjust the exclude patterns. The defaults skip `node_modul
 
 ```json
 {
-  "designqc": {
     "chrome_path": "/path/to/chrome"
   }
 }
 ```
 
 Auto-detection checks these locations in order:
-1. `designqc.chrome_path` in `.wolf/config.json` (if set)
 2. Google Chrome (standard install paths)
 3. Microsoft Edge (standard install paths)
 4. Chromium
 
-## designqc: puppeteer-core not installed
 
-**Symptom:** Running `openwolf designqc` shows "puppeteer-core is required for designqc".
 
 **Cause:** `puppeteer-core` is an optional dependency and was not installed with OpenWolf.
 
@@ -178,16 +172,13 @@ npm install puppeteer-core
 
 This installs the Puppeteer library without downloading a bundled browser (that is what makes it `puppeteer-core` rather than full `puppeteer`).
 
-## designqc: Dev server not detected
 
-**Symptom:** Running `openwolf designqc` shows "No running server found" or "No dev script found".
 
 **Cause:** Design QC needs a running dev server to capture screenshots. It tries to detect one automatically but could not find it.
 
 **Fix:** Either start your dev server manually and pass the URL:
 
 ```bash
-openwolf designqc --url http://localhost:3000
 ```
 
 Or add a `dev`, `start`, or `serve` script to your `package.json` so that Design QC can detect and start it automatically:
@@ -200,7 +191,6 @@ Or add a `dev`, `start`, or `serve` script to your `package.json` so that Design
 }
 ```
 
-## designqc: Screenshots only show top of page
 
 **Symptom:** Captured screenshots only contain the top portion of the page.
 

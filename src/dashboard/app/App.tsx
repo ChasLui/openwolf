@@ -14,7 +14,6 @@ const MemoryViewer = lazy(() => import("./components/panels/MemoryViewer.js").th
 const AnatomyBrowser = lazy(() => import("./components/panels/AnatomyBrowser.js").then(m => ({ default: m.AnatomyBrowser })));
 const BugLog = lazy(() => import("./components/panels/BugLog.js").then(m => ({ default: m.BugLog })));
 const AISuggestions = lazy(() => import("./components/panels/AISuggestions.js").then(m => ({ default: m.AISuggestions })));
-const DesignQC = lazy(() => import("./components/panels/DesignQC.js").then(m => ({ default: m.DesignQC })));
 
 const panelTitles: Record<string, string> = {
   overview: "Overview",
@@ -26,7 +25,6 @@ const panelTitles: Record<string, string> = {
   anatomy: "Anatomy Browser",
   bugs: "Bug Log",
   suggestions: "AI Insights",
-  designqc: "Design QC",
 };
 
 function Skeleton() {
@@ -81,7 +79,6 @@ export default function App() {
           {activePanel === "anatomy" && <AnatomyBrowser data={data} />}
           {activePanel === "bugs" && <BugLog data={data} />}
           {activePanel === "suggestions" && <AISuggestions data={data} />}
-          {activePanel === "designqc" && <DesignQC data={data} />}
         </Suspense>
       </Layout>
     </div>

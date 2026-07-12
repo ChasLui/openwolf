@@ -89,11 +89,5 @@ Claude handles the entire migration: installing packages, updating configs, conv
 
 ## Works with Design QC
 
-Reframe pairs naturally with [Design QC](/designqc) in a full visual feedback loop:
-
-1. **Evaluate** -- run `openwolf designqc` and ask Claude to review the current design
-2. **Decide** -- discuss framework options with Claude (Reframe activates)
-3. **Migrate** -- Claude installs the chosen framework and rebuilds components
-4. **Verify** -- run `openwolf designqc` again and ask Claude to compare before/after
 
 This loop keeps design decisions grounded in actual visual output rather than guesswork.
