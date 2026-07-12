@@ -4,7 +4,7 @@ import * as crypto from "node:crypto";
 import {
   getWolfDir, ensureWolfDir, readJSON, writeJSON, readMarkdown, parseAnatomy, serializeAnatomy,
   extractDescription, estimateTokens, appendMarkdown, timeShort, readStdin, normalizePath,
-  isSensitiveFile
+  isSensitiveFile, getProjectDir
 } from "./shared.js";
 
 // File types where a value/string change is normal content editing, not a bug
@@ -47,7 +47,7 @@ async function main(): Promise<void> {
   const wolfDir = getWolfDir();
   const hooksDir = path.join(wolfDir, "hooks");
   const sessionFile = path.join(hooksDir, "_session.json");
-  const projectRoot = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const projectRoot = getProjectDir();
 
   const raw = await readStdin();
   let input: { tool_name?: string; tool_input?: { file_path?: string; path?: string; content?: string; old_string?: string; new_string?: string } };

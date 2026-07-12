@@ -2,10 +2,20 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as crypto from "node:crypto";
 
+// Prefer the harness-provided project dir so hooks work even if CWD changes
+// during a session. Each supported agent exposes its own env var; hooks are
+// provider-agnostic (Workstream C) so all are checked.
+export function getProjectDir(): string {
+  return (
+    process.env.CLAUDE_PROJECT_DIR ||
+    process.env.CODEX_PROJECT_ROOT ||
+    process.env.OPENWOLF_PROJECT_ROOT ||
+    process.cwd()
+  );
+}
+
 export function getWolfDir(): string {
-  // Prefer CLAUDE_PROJECT_DIR so hooks work even if CWD changes during a session
-  const projectDir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  return path.join(projectDir, ".wolf");
+  return path.join(getProjectDir(), ".wolf");
 }
 
 /**

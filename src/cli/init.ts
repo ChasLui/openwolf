@@ -8,6 +8,7 @@ import { readJSON, writeJSON, readText, writeText, safeCopyFile } from "../utils
 import { ensureDir } from "../utils/paths.js";
 import { isWindows } from "../utils/platform.js";
 import { registerProject, getRegisteredProjects } from "./registry.js";
+import { resolveAgents } from "../agents/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -122,7 +123,7 @@ const HOOK_SETTINGS = {
   },
 };
 
-export async function initCommand(): Promise<void> {
+export async function initCommand(options?: { agent?: string[] }): Promise<void> {
   // Check Node.js version
   const nodeVersion = parseInt(process.version.slice(1), 10);
   if (nodeVersion < 20) {
@@ -277,6 +278,29 @@ export async function initCommand(): Promise<void> {
   } catch {
     // Non-fatal — registry is a convenience feature
   }
+
+  // --- Additional agents (Workstream C): codex / opencode / gemini / cursor ---
+  const agentNames = options?.agent ?? [];
+  const installedAgents: string[] = ["claude"];
+  if (agentNames.length > 0) {
+    const adapters = resolveAgents(agentNames); // throws on unknown names
+    const ctx = { projectRoot, wolfDir, templatesDir: actualTemplatesDir };
+    for (const adapter of adapters) {
+      const result = adapter.install(ctx);
+      installedAgents.push(adapter.name);
+      for (const line of result.actions) console.log(`  ✓ ${line}`);
+      for (const warn of result.warnings) console.log(`  ⚠ ${adapter.displayName}: ${warn}`);
+    }
+  }
+  // Record which agents are wired up so `openwolf update`/dashboard know.
+  try {
+    const cfgPath = path.join(wolfDir, "config.json");
+    const cfg = readJSON<any>(cfgPath, null as any);
+    if (cfg && cfg.openwolf) {
+      cfg.openwolf.agents = installedAgents;
+      writeJSON(cfgPath, cfg);
+    }
+  } catch {}
 
   // --- Summary ---
   console.log("");
