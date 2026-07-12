@@ -233,6 +233,15 @@ OpenWolf is not an AI wrapper. It is 6 hook scripts and a `.wolf/` directory. It
 
 We were building products with Claude Code at Cytostack when we noticed something off. Sessions were eating through tokens faster than they should. When we dug in, we found Claude re-reading the same files multiple times, scanning entire directories to find one function, and having no way to know what a file contained without opening it. There was no project map, no read awareness, no token visibility. So we built the tooling we wished existed -- a file index so Claude reads less, a learning memory so it gets smarter, and a ledger that tracks every token. That became OpenWolf.
 
+## Contributors
+
+OpenWolf is better because people fixed it. Every merged contribution is credited here, in the same batch that ships it.
+
+| | | | | |
+|:-:|:-:|:-:|:-:|:-:|
+| [<img src="https://github.com/fsener.png" width="60"/>](https://github.com/fsener)<br/>**fsener**<br/><sub>CRLF anatomy fix (#24)</sub> | [<img src="https://github.com/albertomenache.png" width="60"/>](https://github.com/albertomenache)<br/>**albertomenache**<br/><sub>CRLF root-cause (#50, #51)</sub> | [<img src="https://github.com/whydoyouwork.png" width="60"/>](https://github.com/whydoyouwork)<br/>**whydoyouwork**<br/><sub>config deep-merge (#27)</sub> | [<img src="https://github.com/mann1x.png" width="60"/>](https://github.com/mann1x)<br/>**mann1x**<br/><sub>port preservation (#38)</sub> | [<img src="https://github.com/GordongWang.png" width="60"/>](https://github.com/GordongWang)<br/>**GordongWang**<br/><sub>null-safe bug search (#44)</sub> |
+| [<img src="https://github.com/WeathermanTony.png" width="60"/>](https://github.com/WeathermanTony)<br/>**WeathermanTony**<br/><sub>WSL2 EPERM fix (#33)</sub> | [<img src="https://github.com/goashem.png" width="60"/>](https://github.com/goashem)<br/>**goashem**<br/><sub>anatomy scope guard (#56)</sub> | [<img src="https://github.com/bryandent.png" width="60"/>](https://github.com/bryandent)<br/>**bryandent**<br/><sub>buglog noise fix (#57)</sub> | [<img src="https://github.com/levnikmyskin.png" width="60"/>](https://github.com/levnikmyskin)<br/>**levnikmyskin**<br/><sub>Dart support (#10)</sub> | |
+
 ## License
 
 [AGPL-3.0](LICENSE)
