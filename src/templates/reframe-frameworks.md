@@ -2,6 +2,37 @@
 
 When the user asks to change, pick, migrate, or "reframe" their UI framework, use this file to guide the conversation and generate the right migration prompt.
 
+## Design Principles — the anti-generic mandate (applies to EVERY prompt below)
+
+**Nothing you produce may look AI-generated.** The recognizable AI aesthetic is a
+failure state, no matter which framework is chosen. Apply these rules to every
+migration, every component, every page:
+
+**Never produce (the AI-tell blocklist):**
+- Purple/indigo/violet gradient heroes, or gradient text on centered headlines
+- Glassmorphism cards as the default surface; rounded-2xl + soft shadow on everything
+- ✨ 🚀 🎉 emoji in headings or feature lists
+- Generic 3-column icon–title–blurb feature grids
+- Gradient blob / mesh backgrounds and meaningless floating 3D shapes
+- The stock Tailwind palette used as-is; Inter (or system font) for every text role
+- One uniform 8px spacing rhythm with no density variation anywhere
+- The dark-purple SaaS landing template (hero → logo bar → 3 features → CTA)
+- Filler copy ("Supercharge your workflow", "Built for developers, by developers")
+
+**Always aim for:**
+- Typography chosen with intent: a deliberate pairing, optical sizes, tightened
+  tracking on display text — type does the branding work
+- A palette derived from the product's actual domain and brand, not the framework's
+  default theme
+- Asymmetry and grid-breaking where it serves hierarchy; density that matches the
+  audience (data tools can be dense; consumer pages can breathe)
+- Copy that is specific to what this product does — never template filler
+- **Distinctiveness as an acceptance criterion**: if the design could be swapped onto
+  any other product without anyone noticing, it fails review
+
+The `/redesign` command audits and fixes existing UI against these rules; use it
+after any migration.
+
 ## Decision Questions
 
 Ask these in order. Stop early if the answer narrows to 1-2 frameworks.

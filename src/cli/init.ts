@@ -9,6 +9,7 @@ import { ensureDir } from "../utils/paths.js";
 import { isWindows } from "../utils/platform.js";
 import { registerProject, getRegisteredProjects } from "./registry.js";
 import { resolveAgents } from "../agents/index.js";
+import { installSkills } from "../agents/skills.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -318,6 +319,13 @@ export async function initCommand(options?: { agent?: string[] }): Promise<void>
     if (cfg && cfg.openwolf) {
       cfg.openwolf.agents = installedAgents;
       writeJSON(cfgPath, cfg);
+    }
+  } catch {}
+
+  // --- Bundled skills (Workstream H): /security-audit, /redesign ---
+  try {
+    for (const line of installSkills(projectRoot, actualTemplatesDir, installedAgents)) {
+      console.log(`  ✓ ${line}`);
     }
   } catch {}
 

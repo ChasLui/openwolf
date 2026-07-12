@@ -58,7 +58,7 @@ That's it. Use `claude` normally. OpenWolf is watching.
 | `memory.md` | Chronological action log with token estimates |
 | `buglog.json` | Bug fix memory, searchable, prevents re-discovery |
 | `token-ledger.json` | Lifetime token tracking and session history |
-| `hooks/` | 6 Claude Code lifecycle hooks (pure Node.js) |
+| `hooks/` | 7 lifecycle hooks (pure Node.js) shared by all supported agents |
 | `config.json` | Configuration with sensible defaults |
 | `identity.md` | Agent persona for this project |
 | `OPENWOLF.md` | Instructions Claude follows every session |
@@ -198,7 +198,16 @@ openwolf restore [backup]  Restore .wolf/ from a timestamped backup
 
 ## Reframe
 
-Ask Claude to help you pick a UI framework. OpenWolf ships a curated knowledge base of 12 frameworks (shadcn/ui, Aceternity, Magic UI, DaisyUI, HeroUI, Chakra, Flowbite, Preline, Park UI, Origin UI, Headless UI, Cult UI) with battle-tested migration prompts. Claude reads `.wolf/reframe-frameworks.md`, asks you a few questions, and executes the migration with the right prompt for your project.
+Ask your agent to help you pick a UI framework. OpenWolf ships a curated knowledge base of 12 frameworks (shadcn/ui, Aceternity, Magic UI, DaisyUI, HeroUI, Chakra, Flowbite, Preline, Park UI, Origin UI, Headless UI, Cult UI) with battle-tested migration prompts. The agent reads `.wolf/reframe-frameworks.md`, asks you a few questions, and executes the migration with the right prompt for your project.
+
+Every Reframe prompt now enforces an **anti-generic design mandate**: a blocklist of the recognizable "AI-generated" aesthetic (purple gradient heroes, glassmorphism-everything, emoji headings, template feature grids) and positive principles — intentional typography, brand-derived palettes, distinctiveness as an acceptance criterion.
+
+## Bundled Skills
+
+`openwolf init` installs two slash commands into every configured agent (Claude Code, Codex, OpenCode):
+
+- **`/security-audit [scope]`** — layered audit: dependencies → secrets → injection surfaces → authn/authz → severity-ranked report, wired into `.wolf/buglog.json`.
+- **`/redesign [target] [--mode audit|fix]`** — audits or fixes UI against the anti-generic design principles.
 
 ## Supported Agents
 
