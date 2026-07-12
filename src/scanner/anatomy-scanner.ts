@@ -54,8 +54,24 @@ function estimateTokens(text: string, filePath: string): number {
   return Math.ceil(text.length / ratio);
 }
 
-// Files that should never appear in anatomy (secrets, env files)
-const ALWAYS_EXCLUDE_FILES = new Set([".env", ".env.local", ".env.production", ".env.staging", ".env.development"]);
+// Files that should never appear in anatomy (secrets, env files, keys).
+// Kept in sync with isSensitiveFile in src/hooks/shared.ts — hooks are
+// standalone scripts and cannot import from the scanner build (issue #54).
+const SENSITIVE_EXTENSIONS = new Set([
+  ".pem", ".key", ".p8", ".p12", ".pfx", ".keystore", ".jks", ".ppk", ".kdbx", ".tfstate",
+]);
+const SENSITIVE_BASENAMES = new Set([".npmrc", ".netrc", ".htpasswd", ".pgpass"]);
+
+function isSensitiveFile(basename: string): boolean {
+  const lower = basename.toLowerCase();
+  if (lower === ".env" || lower.startsWith(".env.")) return true;
+  if (SENSITIVE_BASENAMES.has(lower)) return true;
+  const dot = lower.lastIndexOf(".");
+  if (dot >= 0 && SENSITIVE_EXTENSIONS.has(lower.slice(dot))) return true;
+  if (/^id_(rsa|dsa|ecdsa|ed25519)/.test(lower)) return true;
+  if (lower.includes("credential") || /^secrets\.(json|ya?ml|toml)$/.test(lower)) return true;
+  return false;
+}
 
 function shouldExclude(
   relPath: string,
@@ -65,9 +81,7 @@ function shouldExclude(
   const basename = parts[parts.length - 1];
 
   // Always exclude sensitive files regardless of config
-  if (ALWAYS_EXCLUDE_FILES.has(basename)) return true;
-  // Also exclude .env.* variants not in the set (e.g., .env.backup)
-  if (basename.startsWith(".env.") || basename === ".env") return true;
+  if (isSensitiveFile(basename)) return true;
 
   for (const pattern of excludePatterns) {
     // Simple glob: check if any path segment matches

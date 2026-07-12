@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as http from "node:http";
-import { execSync, spawn, type ChildProcess } from "node:child_process";
+import { execSync, execFileSync, spawn, type ChildProcess } from "node:child_process";
 import type { Viewport, Screenshot } from "./designqc-types.js";
 
 export function findChromePath(configPath?: string | null): string {
@@ -19,11 +19,11 @@ export function findChromePath(configPath?: string | null): string {
       if (fs.existsSync(c)) return c;
     }
     try {
-      const r = execSync("where chrome", { encoding: "utf-8", stdio: ["pipe", "pipe", "ignore"] }).trim();
+      const r = execFileSync("where", ["chrome"], { encoding: "utf-8", stdio: ["pipe", "pipe", "ignore"] }).trim();
       if (r) return r.split("\n")[0].trim();
     } catch {}
     try {
-      const r = execSync("where msedge", { encoding: "utf-8", stdio: ["pipe", "pipe", "ignore"] }).trim();
+      const r = execFileSync("where", ["msedge"], { encoding: "utf-8", stdio: ["pipe", "pipe", "ignore"] }).trim();
       if (r) return r.split("\n")[0].trim();
     } catch {}
   } else if (process.platform === "darwin") {

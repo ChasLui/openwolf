@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { execSync, spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import cron from "node-cron";
 import { readJSON, writeJSON, readText, writeText, appendText } from "../utils/fs-safe.js";
 import { scanProject } from "../scanner/anatomy-scanner.js";
@@ -297,8 +297,7 @@ export class CronEngine {
 
   private hasClaude(): boolean {
     try {
-      const cmd = process.platform === "win32" ? "where claude" : "which claude";
-      execSync(cmd, { stdio: "ignore" });
+      execFileSync(process.platform === "win32" ? "where" : "which", ["claude"], { stdio: "ignore" });
       return true;
     } catch {
       return false;

@@ -32,8 +32,7 @@ function pm2Bin(): string {
 
 function hasPm2(): boolean {
   try {
-    const cmd = isWindows() ? "where pm2" : "which pm2";
-    execSync(cmd, { stdio: "ignore" });
+    execFileSync(isWindows() ? "where" : "which", ["pm2"], { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -43,7 +42,7 @@ function hasPm2(): boolean {
 function findPidOnPort(port: number): number | null {
   try {
     if (isWindows()) {
-      const output = execSync(`netstat -ano -p tcp`, { encoding: "utf-8" });
+      const output = execFileSync("netstat", ["-ano", "-p", "tcp"], { encoding: "utf-8" });
       for (const line of output.split("\n")) {
         if (line.includes(`:${port}`) && line.includes("LISTENING")) {
           const parts = line.trim().split(/\s+/);

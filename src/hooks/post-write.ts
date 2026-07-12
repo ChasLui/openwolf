@@ -3,7 +3,8 @@ import * as path from "node:path";
 import * as crypto from "node:crypto";
 import {
   getWolfDir, ensureWolfDir, readJSON, writeJSON, readMarkdown, parseAnatomy, serializeAnatomy,
-  extractDescription, estimateTokens, appendMarkdown, timeShort, readStdin, normalizePath
+  extractDescription, estimateTokens, appendMarkdown, timeShort, readStdin, normalizePath,
+  isSensitiveFile
 } from "./shared.js";
 
 // File types where a value/string change is normal content editing, not a bug
@@ -72,9 +73,10 @@ async function main(): Promise<void> {
   // wiped again by every full `openwolf scan`, so the index churns instead of converging.
   if (relPath.startsWith("..")) { process.exit(0); return; }
 
-  // Never track .env files in anatomy — they contain secrets
+  // Never track secret-bearing files in anatomy/memory (issue #54): .env is
+  // not the only file whose *description* would leak sensitive content.
   const baseName = path.basename(absolutePath);
-  if (baseName === ".env" || baseName.startsWith(".env.")) { process.exit(0); return; }
+  if (isSensitiveFile(baseName)) { process.exit(0); return; }
 
   const oldStr = input.tool_input?.old_string ?? "";
   const newStr = input.tool_input?.new_string ?? "";

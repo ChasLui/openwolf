@@ -248,8 +248,7 @@ export async function initCommand(): Promise<void> {
   // --- Daemon ---
   let daemonStatus = "start manually with: openwolf daemon start";
   try {
-    const pm2Cmd = isWindows() ? "where pm2" : "which pm2";
-    execSync(pm2Cmd, { stdio: "ignore" });
+    execFileSync(isWindows() ? "where" : "which", ["pm2"], { stdio: "ignore" });
     const name = `openwolf-${path.basename(projectRoot).replace(/[^a-zA-Z0-9._-]/g, "-")}`;
     // Resolve daemon script relative to openwolf's install dir, not the target project
     const daemonScript = path.resolve(__dirname, "..", "daemon", "wolf-daemon.js");

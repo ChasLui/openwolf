@@ -111,6 +111,26 @@ export function serializeAnatomy(
   return lines.join("\n");
 }
 
+// Files whose contents (or content-derived descriptions) must never reach
+// anatomy.md / memory.md because they hold secrets (issue #54). Kept in sync
+// with the copy in src/scanner/anatomy-scanner.ts — hooks are standalone
+// scripts and the scanner cannot be imported from here.
+const SENSITIVE_EXTENSIONS = new Set([
+  ".pem", ".key", ".p8", ".p12", ".pfx", ".keystore", ".jks", ".ppk", ".kdbx", ".tfstate",
+]);
+const SENSITIVE_BASENAMES = new Set([".npmrc", ".netrc", ".htpasswd", ".pgpass"]);
+
+export function isSensitiveFile(basename: string): boolean {
+  const lower = basename.toLowerCase();
+  if (lower === ".env" || lower.startsWith(".env.")) return true;
+  if (SENSITIVE_BASENAMES.has(lower)) return true;
+  const dot = lower.lastIndexOf(".");
+  if (dot >= 0 && SENSITIVE_EXTENSIONS.has(lower.slice(dot))) return true;
+  if (/^id_(rsa|dsa|ecdsa|ed25519)/.test(lower)) return true;
+  if (lower.includes("credential") || /^secrets\.(json|ya?ml|toml)$/.test(lower)) return true;
+  return false;
+}
+
 export function extractDescription(filePath: string): string {
   const MAX_DESC = 150;
   const basename = path.basename(filePath);
