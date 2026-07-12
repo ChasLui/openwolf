@@ -87,6 +87,9 @@ async function main(): Promise<void> {
     checkSemanticSummaries(wolfDir, session),
   ].filter((r): r is string => r !== null);
 
+  // Check if STATUS.md is stale relative to this session
+  checkStatusFreshness(wolfDir, session);
+
   // Build session entry for ledger
   const reads = Object.entries(session.files_read).map(([file, data]) => ({
     file,
@@ -207,6 +210,37 @@ function checkForMissingBugLogs(wolfDir: string, session: SessionData): string |
     return `ACTION REQUIRED: Files edited 3+ times this session (${multiEditFiles.join(", ")}) but buglog.json was not updated. Log the bug fixes to .wolf/buglog.json now.`;
   }
   return null;
+}
+
+/**
+ * Check if STATUS.md is older than the session start AND there was meaningful
+ * code activity (3+ writes outside .wolf/). If so, nudge Claude to update
+ * STATUS.md so the next /clear has fresh handoff context.
+ */
+function checkStatusFreshness(wolfDir: string, session: SessionData): void {
+  const statusPath = path.join(wolfDir, "STATUS.md");
+  const codeWrites = session.files_written.filter(
+    (w) => !w.file.includes("/.wolf/") && !w.file.endsWith(".tmp")
+  );
+
+  try {
+    const stat = fs.statSync(statusPath);
+    const sessionStartMs = session.started ? Date.parse(session.started) : 0;
+    if (!sessionStartMs) return;
+
+    if (codeWrites.length >= 3 && stat.mtimeMs < sessionStartMs) {
+      process.stderr.write(
+        `📌 OpenWolf: STATUS.md not updated this session despite ${codeWrites.length} code writes. Update .wolf/STATUS.md (✅ done / 🚀 next quest) before /clear so next session resumes in 1 read.\n`
+      );
+    }
+  } catch {
+    // STATUS.md doesn't exist — nudge to create it if there were code writes
+    if (codeWrites.length >= 3) {
+      process.stderr.write(
+        `📌 OpenWolf: .wolf/STATUS.md missing. Create it with current quest summary + next steps so /clear stays cheap.\n`
+      );
+    }
+  }
 }
 
 /**
