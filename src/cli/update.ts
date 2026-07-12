@@ -64,6 +64,7 @@ const HOOK_SETTINGS = {
       { matcher: "Read", hooks: [{ type: "command", command: 'node "$CLAUDE_PROJECT_DIR/.wolf/hooks/post-read.js"', timeout: 5 }] },
       { matcher: "Write|Edit|MultiEdit", hooks: [{ type: "command", command: 'node "$CLAUDE_PROJECT_DIR/.wolf/hooks/post-write.js"', timeout: 10 }] },
     ],
+    PreCompact: [{ matcher: "", hooks: [{ type: "command", command: 'node "$CLAUDE_PROJECT_DIR/.wolf/hooks/precompact.js"', timeout: 5 }] }],
     Stop: [{ matcher: "", hooks: [{ type: "command", command: 'node "$CLAUDE_PROJECT_DIR/.wolf/hooks/stop.js"', timeout: 10 }] }],
   },
 };
@@ -345,7 +346,7 @@ function copyHookScripts(wolfDir: string): void {
 
   const hookFiles = [
     "session-start.js", "pre-read.js", "pre-write.js",
-    "post-read.js", "post-write.js", "stop.js", "shared.js",
+    "post-read.js", "post-write.js", "precompact.js", "stop.js", "shared.js",
   ];
 
   if (sourceDir) {

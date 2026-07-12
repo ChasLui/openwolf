@@ -6,6 +6,7 @@ import { initCommand } from "./init.js";
 import { statusCommand } from "./status.js";
 import { scanCommand } from "./scan.js";
 import { dashboardCommand } from "./dashboard.js";
+import { reportCommand } from "./report.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -52,6 +53,11 @@ export function createProgram(): Command {
     .command("dashboard")
     .description("Open browser to dashboard")
     .action(dashboardCommand);
+
+  program
+    .command("report")
+    .description("Token report: estimated vs measured (from harness transcripts)")
+    .action(reportCommand);
 
   const daemon = program
     .command("daemon")

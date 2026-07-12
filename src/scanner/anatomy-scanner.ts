@@ -1,8 +1,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { execFileSync } from "node:child_process";
 import { extractDescription, capDescription } from "./description-extractor.js";
-import { readJSON } from "../utils/fs-safe.js";
-import { writeText } from "../utils/fs-safe.js";
+import { readJSON, writeJSON, writeText } from "../utils/fs-safe.js";
 import { normalizePath } from "../utils/paths.js";
 
 interface AnatomyEntry {
@@ -266,6 +266,21 @@ export function scanProject(wolfDir: string, projectRoot: string): number {
   const { content, fileCount } = buildAnatomy(wolfDir, projectRoot);
   const anatomyPath = path.join(wolfDir, "anatomy.md");
   writeText(anatomyPath, content);
+
+  // Record scan state so hooks can detect staleness (git switches, editor
+  // edits outside an agent) without rescanning — Workstream F2b.
+  try {
+    let gitHead: string | null = null;
+    try {
+      gitHead = execFileSync("git", ["rev-parse", "HEAD"], { cwd: projectRoot, encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    } catch {}
+    writeJSON(path.join(wolfDir, "_scan-state.json"), {
+      last_scanned: new Date().toISOString(),
+      git_head: gitHead,
+      file_count: fileCount,
+    });
+  } catch {}
+
   return fileCount;
 }
 

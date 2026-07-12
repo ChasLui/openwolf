@@ -1,6 +1,51 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getWolfDir, ensureWolfDir, readJSON, writeJSON, appendMarkdown, timeShort, countSemanticEntries } from "./shared.js";
+import { getWolfDir, ensureWolfDir, readJSON, writeJSON, appendMarkdown, timeShort, countSemanticEntries, readStdin } from "./shared.js";
+
+// ─── Real token usage (Workstream F1) ────────────────────────────────────────
+// The Stop payload carries transcript_path; the transcript JSONL records the
+// harness's actual per-message API usage. Summing it gives *measured* session
+// tokens — the verifiable numbers the estimated ledger can be checked against.
+
+export interface RealUsage {
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_input_tokens: number;
+  cache_creation_input_tokens: number;
+  api_calls: number;
+}
+
+export function readTranscriptUsage(transcriptPath: string): RealUsage | null {
+  let raw: string;
+  try {
+    raw = fs.readFileSync(transcriptPath, "utf-8");
+  } catch {
+    return null;
+  }
+  // One usage block per API call; streaming can emit several transcript lines
+  // for one message id — keep the last usage seen per id.
+  const byId = new Map<string, { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number }>();
+  let anon = 0;
+  for (const line of raw.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const entry = JSON.parse(line);
+      const usage = entry?.message?.usage;
+      if (usage && typeof usage === "object" && typeof usage.output_tokens === "number") {
+        byId.set(entry.message.id ?? `anon-${anon++}`, usage);
+      }
+    } catch {}
+  }
+  if (byId.size === 0) return null;
+  const total: RealUsage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, api_calls: byId.size };
+  for (const u of byId.values()) {
+    total.input_tokens += u.input_tokens ?? 0;
+    total.output_tokens += u.output_tokens ?? 0;
+    total.cache_read_input_tokens += u.cache_read_input_tokens ?? 0;
+    total.cache_creation_input_tokens += u.cache_creation_input_tokens ?? 0;
+  }
+  return total;
+}
 
 interface FileRead {
   count: number;
@@ -54,6 +99,12 @@ async function main(): Promise<void> {
   const wolfDir = getWolfDir();
   const hooksDir = path.join(wolfDir, "hooks");
   const sessionFile = path.join(hooksDir, "_session.json");
+
+  // Stop payload → transcript path for real usage measurement (F1)
+  let hookInput: { transcript_path?: string } = {};
+  try {
+    hookInput = JSON.parse(await readStdin());
+  } catch {}
 
   const session = readJSON<SessionData>(sessionFile, {
     session_id: "",
@@ -148,6 +199,20 @@ async function main(): Promise<void> {
     sessions: SessionEntry[];
     [key: string]: unknown;
   };
+
+  // Attach measured usage from the transcript when the harness provides it.
+  if (hookInput.transcript_path) {
+    const real = readTranscriptUsage(hookInput.transcript_path);
+    if (real) {
+      (sessionEntry as SessionEntry & { real_usage?: RealUsage }).real_usage = real;
+      const lt = ledger.lifetime as Record<string, number>;
+      lt.real_input_tokens = (lt.real_input_tokens ?? 0) + real.input_tokens;
+      lt.real_output_tokens = (lt.real_output_tokens ?? 0) + real.output_tokens;
+      lt.real_cache_read_tokens = (lt.real_cache_read_tokens ?? 0) + real.cache_read_input_tokens;
+      lt.real_cache_creation_tokens = (lt.real_cache_creation_tokens ?? 0) + real.cache_creation_input_tokens;
+      lt.real_api_calls = (lt.real_api_calls ?? 0) + real.api_calls;
+    }
+  }
 
   ledger.sessions.push(sessionEntry);
   ledger.lifetime.total_reads += readCount;

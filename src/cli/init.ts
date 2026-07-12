@@ -109,6 +109,18 @@ const HOOK_SETTINGS = {
         ],
       },
     ],
+    PreCompact: [
+      {
+        matcher: "",
+        hooks: [
+          {
+            type: "command",
+            command: 'node "$CLAUDE_PROJECT_DIR/.wolf/hooks/precompact.js"',
+            timeout: 5,
+          },
+        ],
+      },
+    ],
     Stop: [
       {
         matcher: "",
@@ -545,6 +557,7 @@ function copyHookScripts(wolfDir: string): void {
     "pre-write.js",
     "post-read.js",
     "post-write.js",
+    "precompact.js",
     "stop.js",
     "shared.js",
   ];

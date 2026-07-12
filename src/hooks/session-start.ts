@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getWolfDir, ensureWolfDir, writeJSON, appendMarkdown, readJSON, timestamp, timeShort, estimateTokens } from "./shared.js";
+import { execFileSync } from "node:child_process";
+import { getWolfDir, ensureWolfDir, writeJSON, appendMarkdown, readJSON, timestamp, timeShort, estimateTokens, readStdin } from "./shared.js";
 
 // ─── Session digest (Workstream E/F: model-aware context budgeting) ─────────
 //
@@ -116,24 +117,36 @@ async function main(): Promise<void> {
   const now = new Date();
   const sessionId = `session-${now.toISOString().slice(0, 10)}-${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
 
-  // Create fresh session state
-  writeJSON(sessionFile, {
-    session_id: sessionId,
-    started: timestamp(),
-    files_read: {},
-    files_written: [],
-    edit_counts: {},
-    anatomy_hits: 0,
-    anatomy_misses: 0,
-    repeated_reads_warned: 0,
-    cerebrum_warnings: 0,
-    stop_count: 0,
-  });
+  // SessionStart fires for startup/resume/clear/compact. Only startup and
+  // clear begin a genuinely new session — on resume/compact the session is
+  // still live, and resetting _session.json would wipe read/write tracking
+  // mid-flight (Workstream F3: compaction survival).
+  let source = "startup";
+  try {
+    const hookInput = JSON.parse(await readStdin());
+    if (typeof hookInput.source === "string") source = hookInput.source;
+  } catch {}
+  const continuing = (source === "compact" || source === "resume") && fs.existsSync(sessionFile);
 
-  // Append session header to memory.md
-  const memoryPath = path.join(wolfDir, "memory.md");
-  const header = `\n## Session: ${now.toISOString().slice(0, 10)} ${timeShort()}\n\n| Time | Action | File(s) | Outcome | ~Tokens |\n|------|--------|---------|---------|--------|\n`;
-  appendMarkdown(memoryPath, header);
+  if (!continuing) {
+    writeJSON(sessionFile, {
+      session_id: sessionId,
+      started: timestamp(),
+      files_read: {},
+      files_written: [],
+      edit_counts: {},
+      anatomy_hits: 0,
+      anatomy_misses: 0,
+      repeated_reads_warned: 0,
+      cerebrum_warnings: 0,
+      stop_count: 0,
+    });
+
+    // Append session header to memory.md
+    const memoryPath = path.join(wolfDir, "memory.md");
+    const header = `\n## Session: ${now.toISOString().slice(0, 10)} ${timeShort()}\n\n| Time | Action | File(s) | Outcome | ~Tokens |\n|------|--------|---------|---------|--------|\n`;
+    appendMarkdown(memoryPath, header);
+  }
 
   // Check cerebrum freshness — remind Claude to learn
   try {
@@ -182,7 +195,26 @@ async function main(): Promise<void> {
 
   // Inject the budget-capped digest into the model's context.
   try {
-    const digest = buildSessionDigest(wolfDir, digestBudget(wolfDir));
+    let digest = buildSessionDigest(wolfDir, digestBudget(wolfDir));
+
+    // Anatomy staleness detection (F2b): compare scan state against git HEAD
+    // and the configured rescan interval — detection is free; the agent can
+    // run the actual rescan.
+    const staleReason = anatomyStaleReason(wolfDir);
+    if (staleReason) {
+      digest = `⚠ anatomy.md may be stale (${staleReason}). Run \`openwolf scan\` before relying on it.\n\n` + digest;
+    }
+
+    // Post-compaction restore (F3): resurface in-flight session state that
+    // compaction would otherwise erase.
+    if (continuing && source === "compact") {
+      const session = readJSON<{ files_written?: Array<{ file: string }>; edit_counts?: Record<string, number> }>(sessionFile, {});
+      const files = [...new Set((session.files_written ?? []).map((w) => w.file))];
+      if (files.length > 0) {
+        digest = `## Session in progress (context was just compacted)\nFiles already modified this session: ${files.slice(-15).join(", ")}. Do not re-read them wholesale — check .wolf/memory.md for what was done.\n\n` + digest;
+      }
+    }
+
     if (digest) {
       process.stdout.write(JSON.stringify({
         hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: digest },
@@ -191,6 +223,34 @@ async function main(): Promise<void> {
   } catch {}
 
   process.exit(0);
+}
+
+// How the current anatomy scan state is stale, or null if fresh (F2b).
+function anatomyStaleReason(wolfDir: string): string | null {
+  try {
+    const state = readJSON<{ last_scanned?: string; git_head?: string | null }>(
+      path.join(wolfDir, "_scan-state.json"), {}
+    );
+    if (!state.last_scanned) return null; // no scan state yet — nothing to compare
+
+    let currentHead: string | null = null;
+    try {
+      currentHead = execFileSync("git", ["rev-parse", "HEAD"], {
+        cwd: path.dirname(wolfDir), encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"], timeout: 2000,
+      }).trim();
+    } catch {}
+    if (state.git_head && currentHead && state.git_head !== currentHead) {
+      return "git HEAD moved since last scan";
+    }
+
+    const cfg = readJSON<{ openwolf?: { anatomy?: { rescan_interval_hours?: number } } }>(
+      path.join(wolfDir, "config.json"), {}
+    );
+    const intervalH = cfg.openwolf?.anatomy?.rescan_interval_hours ?? 6;
+    const ageH = (Date.now() - new Date(state.last_scanned).getTime()) / 3600000;
+    if (ageH > intervalH) return `last scanned ${Math.floor(ageH)}h ago`;
+  } catch {}
+  return null;
 }
 
 main().catch(() => process.exit(0));
