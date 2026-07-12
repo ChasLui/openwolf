@@ -1,6 +1,102 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getWolfDir, ensureWolfDir, writeJSON, appendMarkdown, readJSON, timestamp, timeShort } from "./shared.js";
+import { getWolfDir, ensureWolfDir, writeJSON, appendMarkdown, readJSON, timestamp, timeShort, estimateTokens } from "./shared.js";
+
+// ─── Session digest (Workstream E/F: model-aware context budgeting) ─────────
+//
+// Instead of relying on the agent to read .wolf/ files, inject a compact
+// digest of the highest-value state directly into the session's context via
+// the SessionStart additionalContext channel — capped to a per-agent token
+// budget so injection cost stays fixed and predictable.
+
+interface ContextConfig {
+  session_digest_budget_tokens?: number;
+  budgets?: Record<string, number>;
+}
+
+function detectAgent(): string {
+  if (process.env.CLAUDE_PROJECT_DIR) return "claude";
+  if (process.env.CODEX_PROJECT_ROOT) return "codex";
+  return "default";
+}
+
+function digestBudget(wolfDir: string): number {
+  const cfg = readJSON<{ openwolf?: { context?: ContextConfig } }>(
+    path.join(wolfDir, "config.json"), {}
+  );
+  const ctx = cfg.openwolf?.context ?? {};
+  const agent = detectAgent();
+  return ctx.budgets?.[agent] ?? ctx.session_digest_budget_tokens ?? 1500;
+}
+
+/** Extract one `## heading` section (heading line through the next ## or ---). */
+function extractSection(markdown: string, headingPattern: RegExp): string {
+  const lines = markdown.split(/\r?\n/);
+  const start = lines.findIndex((l) => headingPattern.test(l));
+  if (start === -1) return "";
+  const out: string[] = [lines[start]];
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^## /.test(lines[i]) || /^---\s*$/.test(lines[i])) break;
+    out.push(lines[i]);
+  }
+  return out.join("\n").trim();
+}
+
+function buildSessionDigest(wolfDir: string, budget: number): string {
+  const parts: string[] = [];
+  let used = 0;
+  const tryAdd = (text: string): boolean => {
+    if (!text) return false;
+    const cost = estimateTokens(text, "prose");
+    if (used + cost > budget) return false;
+    parts.push(text);
+    used += cost;
+    return true;
+  };
+
+  // 1. STATUS.md "next phase" — the single most valuable resume context.
+  try {
+    const status = fs.readFileSync(path.join(wolfDir, "STATUS.md"), "utf-8");
+    tryAdd(extractSection(status, /^## 🚀/));
+  } catch {}
+
+  // 2. Do-Not-Repeat list from cerebrum (most recent 10 entries).
+  try {
+    const cerebrum = fs.readFileSync(path.join(wolfDir, "cerebrum.md"), "utf-8");
+    const dnr = extractSection(cerebrum, /^## Do-Not-Repeat/);
+    if (dnr) {
+      const entries = dnr.split("\n").filter((l) => l.startsWith("- "));
+      if (entries.length > 0) {
+        tryAdd("## Do-Not-Repeat (from .wolf/cerebrum.md)\n" + entries.slice(-10).join("\n"));
+      }
+    }
+  } catch {}
+
+  // 3. Recent known bugs — prevents re-deriving fixes (issue #45).
+  try {
+    const buglog = readJSON<{ bugs: Array<{ error_message?: string; fix?: string }> }>(
+      path.join(wolfDir, "buglog.json"), { bugs: [] }
+    );
+    if (buglog.bugs.length > 0) {
+      const recent = buglog.bugs.slice(-5).map((b) => {
+        const line = `- ${b.error_message ?? "?"} → ${b.fix ?? "?"}`;
+        return line.length > 140 ? line.slice(0, 137) + "..." : line;
+      });
+      tryAdd("## Known bugs already fixed (check .wolf/buglog.json before re-debugging)\n" + recent.join("\n"));
+    }
+  } catch {}
+
+  // 4. Anatomy pointer (one line — the index itself stays on disk).
+  try {
+    const anatomy = fs.readFileSync(path.join(wolfDir, "anatomy.md"), "utf-8");
+    const m = anatomy.match(/Files:\s*(\d+)\s*tracked/i);
+    if (m) {
+      tryAdd(`anatomy.md tracks ${m[1]} files with descriptions + token sizes — check it before reading any file.`);
+    }
+  } catch {}
+
+  return parts.join("\n\n");
+}
 
 async function main(): Promise<void> {
   ensureWolfDir();
@@ -83,6 +179,16 @@ async function main(): Promise<void> {
   };
   ledger.lifetime.total_sessions++;
   writeJSON(ledgerPath, ledger);
+
+  // Inject the budget-capped digest into the model's context.
+  try {
+    const digest = buildSessionDigest(wolfDir, digestBudget(wolfDir));
+    if (digest) {
+      process.stdout.write(JSON.stringify({
+        hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: digest },
+      }));
+    }
+  } catch {}
 
   process.exit(0);
 }

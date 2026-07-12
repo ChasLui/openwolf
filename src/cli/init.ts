@@ -434,7 +434,7 @@ function generateTemplate(destPath: string, file: string): void {
     "cerebrum.md": `# Cerebrum\n\n> OpenWolf's learning memory.\n\n## User Preferences\n\n## Key Learnings\n\n## Do-Not-Repeat\n\n## Decision Log\n`,
     "memory.md": `# Memory\n\n> Chronological action log.\n`,
     "anatomy.md": `# anatomy.md\n\n> Project structure index. Pending initial scan.\n`,
-    "STATUS.md": `# STATUS\n\n> Single source of truth for resuming work. Read this FIRST when starting a session.\n> Update at the end of every quest so the next \`/clear\` resumes in 1 read.\n\n---\n\n## ✅ Concluído\n\n- (nothing yet — fill in as quests complete)\n\n---\n\n## 🚀 Próxima fase\n\n**Objetivo:** _<what we're building next>_\n\n### Critérios de aceitação\n1. _<concrete user-visible outcome>_\n\n### Arquivos a criar / editar\n- _<path + purpose>_\n\n### Decisões pendentes\n- _<question to ask before coding>_\n\n---\n\n## 📁 Arquitetura ativa\n\n- **Stack:** _<frameworks>_\n\n---\n\n## 🔧 Comandos úteis\n\n\`\`\`bash\n# add the most-used commands here\n\`\`\`\n`,
+    "STATUS.md": `# STATUS\n\n> Single source of truth for resuming work. Read this FIRST when starting a session.\n> Update at the end of every work phase so the next \`/clear\` resumes in 1 read.\n\n---\n\n## ✅ Done\n\n- (nothing yet — fill in as work completes)\n\n---\n\n## 🚀 Next phase\n\n**Goal:** _<what we're building next>_\n\n### Acceptance criteria\n1. _<concrete user-visible outcome>_\n\n### Files to create / edit\n- _<path + purpose>_\n\n### Open decisions\n- _<question to ask before coding>_\n\n---\n\n## 📁 Active architecture\n\n- **Stack:** _<frameworks>_\n\n---\n\n## 🔧 Useful commands\n\n\`\`\`bash\n# add the most-used commands here\n\`\`\`\n`,
     "config.json": JSON.stringify({
       version: 1,
       openwolf: {
@@ -444,6 +444,7 @@ function generateTemplate(destPath: string, file: string): void {
         cron: { enabled: true, max_retry_attempts: 3, dead_letter_enabled: true, heartbeat_interval_minutes: 30, use_claude_p: true, api_key_env: null },
         memory: { consolidation_after_days: 7, max_entries_before_consolidation: 200 },
         cerebrum: { max_tokens: 2000, reflection_frequency: "weekly" },
+        context: { session_digest_budget_tokens: 1500, budgets: { claude: 1500, codex: 1200, gemini: 1200, opencode: 1200, cursor: 800 } },
         daemon: { port: 18790, log_level: "info" },
         dashboard: { enabled: true, port: 18791, host: "127.0.0.1" },
         designqc: { enabled: true, viewports: [{ name: "desktop", width: 1440, height: 900 }, { name: "mobile", width: 375, height: 812 }], max_screenshots: 6, chrome_path: null },
