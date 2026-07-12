@@ -210,9 +210,28 @@ Auto-detects your dev server, captures viewport-height JPEG sections of every ro
 
 Ask Claude to help you pick a UI framework. OpenWolf ships a curated knowledge base of 12 frameworks (shadcn/ui, Aceternity, Magic UI, DaisyUI, HeroUI, Chakra, Flowbite, Preline, Park UI, Origin UI, Headless UI, Cult UI) with battle-tested migration prompts. Claude reads `.wolf/reframe-frameworks.md`, asks you a few questions, and executes the migration with the right prompt for your project.
 
+## Supported Agents
+
+One `.wolf/` brain, many agents. `openwolf init` wires up Claude Code by default; add others with `--agent`:
+
+```bash
+openwolf init --agent codex opencode        # pick specific agents
+openwolf init --agent all                   # codex + opencode + gemini + cursor
+```
+
+| Agent | Integration | Depth |
+|-------|-------------|-------|
+| **Claude Code** | 6 lifecycle hooks + `CLAUDE.md` | Full (hooks + context) |
+| **Codex CLI** | `.codex/hooks.json` lifecycle hooks + `AGENTS.md` | Full (hooks + context) |
+| **OpenCode** | Native plugin (`tool.execute.before/after`) + `AGENTS.md` | Full (hooks + context) |
+| **Gemini CLI** | `GEMINI.md` protocol block | Context |
+| **Cursor** | `.cursor/rules/openwolf.mdc` (always applied) | Context |
+
+Context blocks are marker-fenced (`<!-- openwolf:begin/end -->`) — your own content in `AGENTS.md`/`GEMINI.md` is never touched, and re-running init never duplicates.
+
 ## How OpenWolf Compares
 
-OpenWolf is not an AI wrapper. It is 6 hook scripts and a `.wolf/` directory. It doesn't run your AI for you or change your workflow. It gives Claude Code what it lacks: a project map so it reads less, a memory so it learns faster, and a ledger so you see where tokens go.
+OpenWolf is not an AI wrapper. It is 6 hook scripts and a `.wolf/` directory. It doesn't run your AI for you or change your workflow. It gives your coding agent what it lacks: a project map so it reads less, a memory so it learns faster, and a ledger so you see where tokens go.
 
 ## Requirements
 
@@ -241,7 +260,7 @@ OpenWolf is better because people fixed it. Every merged contribution is credite
 |:-:|:-:|:-:|:-:|:-:|
 | [<img src="https://github.com/fsener.png" width="60"/>](https://github.com/fsener)<br/>**fsener**<br/><sub>CRLF anatomy fix (#24)</sub> | [<img src="https://github.com/albertomenache.png" width="60"/>](https://github.com/albertomenache)<br/>**albertomenache**<br/><sub>CRLF root-cause (#50, #51)</sub> | [<img src="https://github.com/whydoyouwork.png" width="60"/>](https://github.com/whydoyouwork)<br/>**whydoyouwork**<br/><sub>config deep-merge (#27)</sub> | [<img src="https://github.com/mann1x.png" width="60"/>](https://github.com/mann1x)<br/>**mann1x**<br/><sub>port preservation (#38)</sub> | [<img src="https://github.com/GordongWang.png" width="60"/>](https://github.com/GordongWang)<br/>**GordongWang**<br/><sub>null-safe bug search (#44)</sub> |
 | [<img src="https://github.com/WeathermanTony.png" width="60"/>](https://github.com/WeathermanTony)<br/>**WeathermanTony**<br/><sub>WSL2 EPERM fix (#33)</sub> | [<img src="https://github.com/goashem.png" width="60"/>](https://github.com/goashem)<br/>**goashem**<br/><sub>anatomy scope guard (#56)</sub> | [<img src="https://github.com/bryandent.png" width="60"/>](https://github.com/bryandent)<br/>**bryandent**<br/><sub>buglog noise fix (#57), secret redaction (#54)</sub> | [<img src="https://github.com/levnikmyskin.png" width="60"/>](https://github.com/levnikmyskin)<br/>**levnikmyskin**<br/><sub>Dart support (#10)</sub> | [<img src="https://github.com/svanack404.png" width="60"/>](https://github.com/svanack404)<br/>**svanack404**<br/><sub>security overhaul (#30)</sub> |
-| [<img src="https://github.com/riverwolf67.png" width="60"/>](https://github.com/riverwolf67)<br/>**riverwolf67**<br/><sub>security audit + tests (#34)</sub> | | | | |
+| [<img src="https://github.com/riverwolf67.png" width="60"/>](https://github.com/riverwolf67)<br/>**riverwolf67**<br/><sub>security audit + tests (#34)</sub> | [<img src="https://github.com/nottyjay.png" width="60"/>](https://github.com/nottyjay)<br/>**nottyjay**<br/><sub>Codex integration (#36)</sub> | [<img src="https://github.com/alfasin.png" width="60"/>](https://github.com/alfasin)<br/>**alfasin**<br/><sub>OpenCode plugin (#9)</sub> | [<img src="https://github.com/ChasLui.png" width="60"/>](https://github.com/ChasLui)<br/>**ChasLui**<br/><sub>adapter architecture (#39)</sub> | |
 
 ## License
 
