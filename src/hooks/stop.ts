@@ -1,51 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getWolfDir, ensureWolfDir, readJSON, writeJSON, appendMarkdown, timeShort, countSemanticEntries, readStdin } from "./shared.js";
-
-// ─── Real token usage (Workstream F1) ────────────────────────────────────────
-// The Stop payload carries transcript_path; the transcript JSONL records the
-// harness's actual per-message API usage. Summing it gives *measured* session
-// tokens — the verifiable numbers the estimated ledger can be checked against.
-
-export interface RealUsage {
-  input_tokens: number;
-  output_tokens: number;
-  cache_read_input_tokens: number;
-  cache_creation_input_tokens: number;
-  api_calls: number;
-}
-
-export function readTranscriptUsage(transcriptPath: string): RealUsage | null {
-  let raw: string;
-  try {
-    raw = fs.readFileSync(transcriptPath, "utf-8");
-  } catch {
-    return null;
-  }
-  // One usage block per API call; streaming can emit several transcript lines
-  // for one message id — keep the last usage seen per id.
-  const byId = new Map<string, { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number }>();
-  let anon = 0;
-  for (const line of raw.split("\n")) {
-    if (!line.trim()) continue;
-    try {
-      const entry = JSON.parse(line);
-      const usage = entry?.message?.usage;
-      if (usage && typeof usage === "object" && typeof usage.output_tokens === "number") {
-        byId.set(entry.message.id ?? `anon-${anon++}`, usage);
-      }
-    } catch {}
-  }
-  if (byId.size === 0) return null;
-  const total: RealUsage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, api_calls: byId.size };
-  for (const u of byId.values()) {
-    total.input_tokens += u.input_tokens ?? 0;
-    total.output_tokens += u.output_tokens ?? 0;
-    total.cache_read_input_tokens += u.cache_read_input_tokens ?? 0;
-    total.cache_creation_input_tokens += u.cache_creation_input_tokens ?? 0;
-  }
-  return total;
-}
+import { getWolfDir, ensureWolfDir, readJSON, writeJSON, appendMarkdown, timeShort, countSemanticEntries, readStdin, readTranscriptUsage, type RealUsage } from "./shared.js";
 
 interface FileRead {
   count: number;
@@ -342,4 +297,9 @@ function checkSemanticSummaries(wolfDir: string, session: SessionData): string |
   return null;
 }
 
-main().catch(() => process.exit(0));
+// Run only when executed as a hook script — never on import (tests import
+// readTranscriptUsage, and main() exits the process).
+import { pathToFileURL } from "node:url";
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(() => process.exit(0));
+}
