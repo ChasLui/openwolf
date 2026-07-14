@@ -31,7 +31,7 @@ You'll see:
 ```
   ✓ OpenWolf initialized
   ✓ .wolf/ created with 11 files
-  ✓ Claude Code hooks registered (6 hooks)
+  ✓ Claude Code hooks registered (7 hooks)
   ✓ CLAUDE.md updated
   ✓ .claude/rules/openwolf.md created
   ✓ Anatomy scan: 47 files indexed

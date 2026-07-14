@@ -1,7 +1,7 @@
 {
   "name": "openwolf",
-  "version": "1.0.4",
-  "description": "Token-conscious AI brain for Claude Code projects",
+  "version": "2.0.0",
+  "description": "The second brain for Claude Code, now for every AI coding assistant: context management, architecture scaffolding, and smarter token utilization through lifecycle hooks.",
   "type": "module",
   "bin": {
     "openwolf": "./dist/bin/openwolf.js"

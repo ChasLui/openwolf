@@ -107,3 +107,24 @@ Controls the web dashboard.
 ::: tip
 The dashboard port is also the daemon's HTTP server port for the web UI. Change this if 18791 conflicts with another service.
 :::
+
+## `context`
+
+Per-agent token budgets for the session digest injected at session start.
+
+```json
+"context": {
+  "session_digest_budget_tokens": 1500,
+  "budgets": {
+    "claude": 1500,
+    "codex": 1200,
+    "gemini": 1200,
+    "opencode": 1200,
+    "cursor": 800
+  }
+}
+```
+
+The digest packs the highest-value state first (STATUS.md next phase, the
+Do-Not-Repeat list, recent bug fixes, the anatomy pointer) and stops at the
+budget, so injection cost stays fixed and predictable.

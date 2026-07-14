@@ -10,15 +10,25 @@ Initialize OpenWolf in the current project.
 openwolf init
 ```
 
+**Options:**
+
+```bash
+openwolf init                          # auto-detect installed agents (default)
+openwolf init --agent codex opencode   # wire exactly these agents
+openwolf init --agent all              # wire every supported agent
+openwolf init --agent claude           # Claude Code only, skip detection
+```
+
 **What it does:**
 1. Detects the project root (looks for `.git`, `package.json`, `Cargo.toml`, etc.)
-2. Creates `.wolf/` with 10 template files
-3. Copies 7 hook scripts to `.wolf/hooks/`
-4. Registers 6 Claude Code hooks in `.claude/settings.json`
-5. Creates `.claude/rules/openwolf.md`
-6. Prepends the OpenWolf snippet to `CLAUDE.md`
-7. Runs an initial anatomy scan
-8. Populates `cerebrum.md` with detected project name and description
+2. Creates `.wolf/` with the template files and the durable anatomy store
+3. Copies the lifecycle hook scripts to `.wolf/hooks/`
+4. Registers 7 hooks in `.claude/settings.json`
+5. Auto-detects installed agents (Codex, OpenCode, Gemini CLI, Cursor) and wires each one: hook registrations, protocol blocks, or plugins as appropriate
+6. Installs the bundled skills (`/security-audit`, `/reframe`) for every wired agent
+7. Creates `.claude/rules/openwolf.md` and prepends the OpenWolf snippet to `CLAUDE.md`
+8. Runs the initial anatomy scan (descriptions, token estimates, symbols)
+9. Populates `cerebrum.md` with detected project name and description
 
 If `.wolf/` already exists, it reinitializes (overwrites templates, preserves learned data).
 
@@ -88,6 +98,19 @@ openwolf scan --check || echo "anatomy.md is out of date. Run openwolf scan"
 ```
 
 ---
+
+## `openwolf report`
+
+Print the token report: estimated usage (character-ratio heuristic) next to
+measured usage (summed from harness transcripts at session end), plus
+lifetime stats and the most recent measured sessions.
+
+```bash
+openwolf report
+```
+
+Measured figures appear once sessions end under 2.0; older projects show
+estimates only until then.
 
 ## `openwolf dashboard`
 

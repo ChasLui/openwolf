@@ -25,7 +25,7 @@ Every OpenWolf project has a `.wolf/` folder containing:
 
 ## Hooks -- The Enforcement Layer
 
-OpenWolf registers 6 hooks with Claude Code via `.claude/settings.json`. These fire automatically:
+OpenWolf registers 7 hooks via `.claude/settings.json` (and `.codex/hooks.json` for Codex). These fire automatically:
 
 ```
 SessionStart ──→ session-start.js    Creates session tracker, logs to memory

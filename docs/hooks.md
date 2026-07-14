@@ -1,6 +1,6 @@
 # Hooks
 
-OpenWolf registers 6 hooks with Claude Code. They fire automatically on every action. No user interaction required.
+OpenWolf registers 7 lifecycle hooks. They fire automatically on every action, and the same scripts serve Claude Code and Codex (OpenCode uses a native plugin with equivalent behavior). No user interaction required.
 
 All hooks are **pure Node.js file I/O**. No network calls, no AI, no external dependencies. They read JSON on stdin from Claude Code and communicate via exit codes and stderr.
 
@@ -116,6 +116,13 @@ All hooks are **pure Node.js file I/O**. No network calls, no AI, no external de
 **Timeout:** 10 seconds (longer because anatomy update involves file parsing)
 
 ---
+
+## `precompact.js`
+
+Fires just before the harness compacts the context window.
+
+1. Snapshots the in-flight session state to `hooks/_precompact-snapshot.json`
+2. After compaction, `session-start.js` runs with source `compact` and re-injects a digest of the files already modified, so finished work is not redone
 
 ## `stop.js`
 
