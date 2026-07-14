@@ -49,7 +49,7 @@
 
 ---
 
-## Why OpenWolf Exists
+## Why Openwolf?
 
 Coding agents are powerful but they work blind. An agent does not know what a
 file contains until it opens it. It cannot tell a 50-token config from a
@@ -296,20 +296,10 @@ node scripts/openwolf-check.mjs [projectDir]   # read-only usage report
   about the rest.
 - Found something broken? [File an issue](https://github.com/cytostack/openwolf/issues).
 
-## Origin Story
-
-We were building products with Claude Code at Cytostack when we noticed
-sessions eating tokens faster than they should. The cause: the agent
-re-reading files, scanning directories to find one function, and starting
-every session from zero. So we built the tooling we wished existed: a file
-index so the agent reads less, a learning memory so it gets smarter, and a
-ledger that tracks every token. That became OpenWolf. 2.0 extends the same
-brain to every major coding agent and replaces trust-me estimates with
-measured numbers.
 
 ## Contributors
 
-OpenWolf is better because people fixed it. Every merged contribution is credited here, in the same batch that ships it.
+OpenWolf is better because people fixed it. Every merged contribution is credited here. Kindly let us know if we have missed a contribution. 
 
 | | | | | |
 |:-:|:-:|:-:|:-:|:-:|
