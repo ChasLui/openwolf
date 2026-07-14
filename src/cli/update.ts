@@ -13,6 +13,8 @@ import { fileURLToPath } from "node:url";
 import { getRegisteredProjects, registerProject, type RegisteredProject } from "./registry.js";
 import { readJSON, writeJSON, readText, writeText, safeCopyFile } from "../utils/fs-safe.js";
 import { ensureDir } from "../utils/paths.js";
+import { resolveAgents, availableAgents } from "../agents/index.js";
+import { installSkills } from "../agents/skills.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,7 +44,7 @@ const ALWAYS_OVERWRITE = ["OPENWOLF.md", "reframe-frameworks.md"];
 // can still recover it.
 const USER_DATA_FILES = [
   "config.json",
-  "identity.md", "cerebrum.md", "memory.md", "anatomy.md",
+  "identity.md", "cerebrum.md", "memory.md", "anatomy.md", "STATUS.md",
   "token-ledger.json", "buglog.json", "cron-manifest.json", "cron-state.json",
   "suggestions.json",
 ];
@@ -210,6 +212,39 @@ async function updateProject(
     writeText(path.join(rulesDir, "openwolf.md"), rulesContent);
     console.log(`    ✓ Claude rules updated`);
 
+    // 5b. Create STATUS.md if missing (projects predating the handoff doc)
+    const statusPath = path.join(wolfDir, "STATUS.md");
+    if (!fs.existsSync(statusPath)) {
+      const statusContent = readTemplateContent("STATUS.md", templatesDir);
+      if (statusContent) {
+        writeText(statusPath, seedStatusPlaceholders(statusContent, root));
+        console.log(`    ✓ STATUS.md created`);
+      }
+    }
+
+    // 5c. Re-run the agent adapters this project was initialized with, so
+    // Codex/OpenCode/Gemini/Cursor wiring picks up new hooks and templates.
+    const cfg = readJSON<{ openwolf?: { agents?: string[] } }>(path.join(wolfDir, "config.json"), {});
+    const agentNames = cfg.openwolf?.agents ?? ["claude"];
+    const known = new Set(availableAgents());
+    const extras = agentNames.filter((a) => a !== "claude");
+    const unknown = extras.filter((a) => !known.has(a));
+    for (const u of unknown) {
+      console.log(`    ⚠ unknown agent "${u}" in config.openwolf.agents — skipped`);
+    }
+    const adapters = resolveAgents(extras.filter((a) => known.has(a)));
+    const ctx = { projectRoot: root, wolfDir, templatesDir };
+    for (const adapter of adapters) {
+      const result = adapter.install(ctx);
+      for (const line of result.actions) console.log(`    ✓ ${line}`);
+      for (const warn of result.warnings) console.log(`    ⚠ ${adapter.displayName}: ${warn}`);
+    }
+
+    // 5d. Refresh bundled skills for every configured agent.
+    for (const line of installSkills(root, templatesDir, agentNames)) {
+      console.log(`    ✓ ${line}`);
+    }
+
     // 6. Update CLAUDE.md snippet if it references OpenWolf
     const claudeMdPath = path.join(root, "CLAUDE.md");
     const snippetContent = readTemplateContent("claude-md-snippet.md", templatesDir);
@@ -246,6 +281,18 @@ async function updateProject(
     const msg = err instanceof Error ? err.message : String(err);
     return { project, status: "error", message: msg };
   }
+}
+
+/** Fill STATUS.md template placeholders — mirrors seedStatus in init.ts. */
+function seedStatusPlaceholders(content: string, projectRoot: string): string {
+  let projectName = path.basename(projectRoot);
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, "package.json"), "utf-8"));
+    if (typeof pkg.name === "string" && pkg.name) projectName = pkg.name;
+  } catch {}
+  return content
+    .replace(/\{\{PROJECT_NAME\}\}/g, projectName)
+    .replace(/\{\{DATE\}\}/g, new Date().toISOString().slice(0, 10));
 }
 
 /**
