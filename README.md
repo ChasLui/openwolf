@@ -293,4 +293,4 @@ OpenWolf is better because people fixed it. Every merged contribution is credite
 
 ## Author
 
-Built by Farhan Palathinkal Afsal, [Cytostack](https://github.com/cytostack)
+Built by Farhan Palathinkal, [Cytostack](https://github.com/cytostack)
