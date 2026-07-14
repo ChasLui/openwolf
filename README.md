@@ -211,11 +211,13 @@ Every Reframe prompt now enforces an **anti-generic design mandate**: a blocklis
 
 ## Supported Agents
 
-One `.wolf/` brain, many agents. `openwolf init` wires up Claude Code by default; add others with `--agent`:
+One `.wolf/` brain, many agents. `openwolf init` **auto-detects the agents installed on your machine** and wires them all up — Claude Code always, plus Codex/OpenCode/Gemini/Cursor when their config or CLI is found. Override with `--agent`:
 
 ```bash
-openwolf init --agent codex opencode        # pick specific agents
-openwolf init --agent all                   # codex + opencode + gemini + cursor
+openwolf init                               # auto-detect (recommended)
+openwolf init --agent codex opencode        # exactly these, no detection
+openwolf init --agent all                   # everything, installed or not
+openwolf init --agent claude                # Claude Code only, skip detection
 ```
 
 | Agent | Integration | Depth |

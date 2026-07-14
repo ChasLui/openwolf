@@ -8,7 +8,7 @@ import { readJSON, writeJSON, readText, writeText, safeCopyFile } from "../utils
 import { ensureDir } from "../utils/paths.js";
 import { isWindows } from "../utils/platform.js";
 import { registerProject, getRegisteredProjects } from "./registry.js";
-import { resolveAgents } from "../agents/index.js";
+import { resolveAgents, detectInstalledAgents } from "../agents/index.js";
 import { installSkills } from "../agents/skills.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -300,9 +300,19 @@ export async function initCommand(options?: { agent?: string[] }): Promise<void>
   }
 
   // --- Additional agents (Workstream C): codex / opencode / gemini / cursor ---
-  const agentNames = options?.agent ?? [];
+  // No --agent flag → auto-detect what's installed on this machine and wire
+  // only that. `--agent claude` opts out; explicit names override detection.
+  let agentNames = options?.agent ?? [];
+  let autoDetected = false;
+  if (agentNames.length === 0) {
+    agentNames = detectInstalledAgents();
+    autoDetected = agentNames.length > 0;
+  }
   const installedAgents: string[] = ["claude"];
   if (agentNames.length > 0) {
+    if (autoDetected) {
+      console.log(`  ✓ Agents detected on this machine: ${agentNames.join(", ")} (auto-wiring; use --agent claude to skip)`);
+    }
     const adapters = resolveAgents(agentNames); // throws on unknown names
     const ctx = { projectRoot, wolfDir, templatesDir: actualTemplatesDir };
     for (const adapter of adapters) {

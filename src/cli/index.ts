@@ -34,7 +34,7 @@ export function createProgram(): Command {
     .description("Initialize .wolf/ in current project")
     .option(
       "--agent <agents...>",
-      "additional agents to wire up alongside Claude Code: codex, opencode, gemini, cursor, all"
+      "agents to wire up alongside Claude Code: codex, opencode, gemini, cursor, all. Default: auto-detect what's installed; pass 'claude' to wire Claude Code only"
     )
     .action((opts: { agent?: string[] }) => initCommand(opts));
 
