@@ -3,6 +3,30 @@ import { dashboardFetch, WolfClient } from "../lib/wolf-client.js";
 import { parseAnatomy, parseMemory, parseCerebrum } from "../lib/file-parsers.js";
 import type { AnatomyEntry, MemorySession, CerebrumData } from "../lib/file-parsers.js";
 
+export interface RealUsage {
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_input_tokens: number;
+  cache_creation_input_tokens: number;
+  api_calls: number;
+}
+
+export interface LedgerSession {
+  id: string;
+  agent?: string;
+  started: string;
+  ended: string;
+  totals: {
+    input_tokens_estimated: number;
+    output_tokens_estimated: number;
+    reads_count: number;
+    writes_count: number;
+    repeated_reads_blocked: number;
+    anatomy_lookups: number;
+  };
+  real_usage?: RealUsage;
+}
+
 interface TokenLedger {
   lifetime: {
     total_tokens_estimated: number;
@@ -13,9 +37,25 @@ interface TokenLedger {
     anatomy_misses: number;
     repeated_reads_blocked: number;
     estimated_savings_vs_bare_cli: number;
+    real_input_tokens?: number;
+    real_output_tokens?: number;
+    real_cache_read_tokens?: number;
+    real_cache_creation_tokens?: number;
+    real_api_calls?: number;
   };
-  sessions: any[];
+  sessions: LedgerSession[];
   waste_flags: any[];
+}
+
+export interface WolfConfig {
+  agents: string[];
+  context?: { session_digest_budget_tokens?: number; budgets?: Record<string, number> };
+}
+
+export interface ScanState {
+  last_scanned?: string;
+  git_head?: string | null;
+  file_count?: number;
 }
 
 interface CronState {
@@ -56,6 +96,9 @@ export interface WolfData {
   health: Health;
   identity: { name: string; role: string };
   project: ProjectMeta;
+  config: WolfConfig;
+  statusDoc: string;
+  scanState: ScanState;
   loading: boolean;
   client: WolfClient | null;
 }
@@ -73,6 +116,9 @@ export function useWolfData(): WolfData {
   const [health, setHealth] = useState<Health>({ status: "unknown", uptime_seconds: 0 });
   const [identity, setIdentity] = useState({ name: "Wolf", role: "AI development assistant" });
   const [project, setProject] = useState<ProjectMeta>({ name: "", description: "", root: "" });
+  const [config, setConfig] = useState<WolfConfig>({ agents: ["claude"] });
+  const [statusDoc, setStatusDoc] = useState("");
+  const [scanState, setScanState] = useState<ScanState>({});
   const [client, setClient] = useState<WolfClient | null>(null);
 
   const processFiles = useCallback((files: Record<string, string>) => {
@@ -93,6 +139,16 @@ export function useWolfData(): WolfData {
     }
     if (files["suggestions.json"]) {
       try { setSuggestions(JSON.parse(files["suggestions.json"])); } catch {}
+    }
+    if (files["config.json"]) {
+      try {
+        const cfg = JSON.parse(files["config.json"]);
+        setConfig({ agents: cfg?.openwolf?.agents ?? ["claude"], context: cfg?.openwolf?.context });
+      } catch {}
+    }
+    if (files["STATUS.md"] !== undefined && files["STATUS.md"] !== "") setStatusDoc(files["STATUS.md"]);
+    if (files["_scan-state.json"]) {
+      try { setScanState(JSON.parse(files["_scan-state.json"])); } catch {}
     }
     if (files["identity.md"]) {
       const nameMatch = files["identity.md"].match(/\*\*Name:\*\*\s*(.+)/);
@@ -146,5 +202,5 @@ export function useWolfData(): WolfData {
     return () => wsClient.disconnect();
   }, [processFiles]);
 
-  return { anatomy, cerebrum, memory, tokenLedger, cronState, cronManifest, buglog, suggestions, health, identity, project, loading, client };
+  return { anatomy, cerebrum, memory, tokenLedger, cronState, cronManifest, buglog, suggestions, health, identity, project, config, statusDoc, scanState, loading, client };
 }

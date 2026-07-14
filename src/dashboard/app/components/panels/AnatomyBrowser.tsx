@@ -53,7 +53,7 @@ function DirNode({ node, search, depth = 0 }: { node: TreeNode; search: string; 
         <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-1.5 py-1 text-sm transition-colors"
           style={{ color: "var(--text-secondary)" }}>
           <span className="w-4 text-center" style={{ color: "var(--text-faint)" }}>{expanded ? "▼" : "▶"}</span>
-          <span className="text-amber-400">📁</span>
+          <span style={{ color: "var(--text-muted)" }}>▸</span>
           <span>{node.name}/</span>
           <span className="text-xs" style={{ color: "var(--text-faint)" }}>{countFiles(node)} files</span>
         </button>
