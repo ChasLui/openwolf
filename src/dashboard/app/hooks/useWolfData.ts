@@ -100,6 +100,7 @@ export interface WolfData {
   statusDoc: string;
   scanState: ScanState;
   loading: boolean;
+  authError: boolean;
   client: WolfClient | null;
 }
 
@@ -120,6 +121,7 @@ export function useWolfData(): WolfData {
   const [statusDoc, setStatusDoc] = useState("");
   const [scanState, setScanState] = useState<ScanState>({});
   const [client, setClient] = useState<WolfClient | null>(null);
+  const [authError, setAuthError] = useState(false);
 
   const processFiles = useCallback((files: Record<string, string>) => {
     if (files["anatomy-index.json"]) {
@@ -183,9 +185,14 @@ export function useWolfData(): WolfData {
   }, []);
 
   useEffect(() => {
-    // Initial fetch
+    // Initial fetch. Never feed a non-OK response body into state: a 401 error
+    // object like {error:"..."} would overwrite defaults and crash the UI.
     dashboardFetch("/api/files")
-      .then(r => r.json())
+      .then(r => {
+        if (r.status === 401) { setAuthError(true); throw new Error("unauthorized"); }
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      })
       .then(files => {
         processFiles(files);
         setLoading(false);
@@ -193,13 +200,13 @@ export function useWolfData(): WolfData {
       .catch(() => setLoading(false));
 
     dashboardFetch("/api/health")
-      .then(r => r.json())
-      .then(h => setHealth(h))
+      .then(r => (r.ok ? r.json() : null))
+      .then(h => { if (h && typeof h.status === "string") setHealth(h); })
       .catch(() => {});
 
     dashboardFetch("/api/project")
-      .then(r => r.json())
-      .then(p => setProject(p))
+      .then(r => (r.ok ? r.json() : null))
+      .then(p => { if (p && typeof p.name === "string") setProject(p); })
       .catch(() => {});
 
     // WebSocket
@@ -222,5 +229,5 @@ export function useWolfData(): WolfData {
     return () => wsClient.disconnect();
   }, [processFiles]);
 
-  return { anatomy, cerebrum, memory, tokenLedger, cronState, cronManifest, buglog, suggestions, health, identity, project, config, statusDoc, scanState, loading, client };
+  return { anatomy, cerebrum, memory, tokenLedger, cronState, cronManifest, buglog, suggestions, health, identity, project, config, statusDoc, scanState, loading, authError, client };
 }

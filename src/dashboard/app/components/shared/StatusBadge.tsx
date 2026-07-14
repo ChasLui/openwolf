@@ -13,8 +13,11 @@ const toneOf: Record<string, Tone> = {
   disabled: "off", unknown: "off",
 };
 
-export function StatusBadge({ status, className }: { status: string; className?: string }) {
-  const tone = toneOf[status.toLowerCase()] ?? "off";
+export function StatusBadge({ status, className }: { status?: string | null; className?: string }) {
+  // Never trust the incoming value: a failed/malformed API response can leave
+  // this undefined, and a crash here white-screens the whole dashboard.
+  const label = typeof status === "string" && status.trim() ? status : "unknown";
+  const tone = toneOf[label.toLowerCase()] ?? "off";
   const dotStyle: React.CSSProperties =
     tone === "ok" ? { background: "var(--ok)" }
     : tone === "warn" ? { background: "transparent", border: "1.5px solid var(--accent)" }
@@ -28,9 +31,9 @@ export function StatusBadge({ status, className }: { status: string; className?:
         color: tone === "bad" ? "var(--accent)" : "var(--text-secondary)",
       }}
     >
-      <span className={cn("rounded-full", tone === "ok" && status.toLowerCase() === "running" ? "rec-pulse" : "")}
+      <span className={cn("rounded-full", tone === "ok" && label.toLowerCase() === "running" ? "rec-pulse" : "")}
         style={{ width: 6, height: 6, ...dotStyle }} />
-      {status}
+      {label}
     </span>
   );
 }

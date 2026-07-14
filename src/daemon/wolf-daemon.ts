@@ -213,8 +213,10 @@ app.get("/{*path}", (_req, res) => {
   }
 });
 
-// Start HTTP server
-const port = config.openwolf.dashboard.port;
+// Start HTTP server. OPENWOLF_DASHBOARD_PORT lets the launcher override the
+// configured port when it is already held by another project's daemon.
+const envPort = Number(process.env.OPENWOLF_DASHBOARD_PORT);
+const port = Number.isInteger(envPort) && envPort > 0 ? envPort : config.openwolf.dashboard.port;
 const host = config.openwolf.dashboard.host || "127.0.0.1";
 const server = app.listen(port, host, () => {
   logger.info(`Dashboard server listening on ${host}:${port}`);

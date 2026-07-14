@@ -4,6 +4,24 @@ All notable changes to OpenWolf are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and OpenWolf uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.0.1] - 2026-07-15
+
+### Fixed
+
+- Dashboard no longer white-screens when the server rejects the token. A 401
+  now renders a clear "token rejected" message with guidance instead of
+  crashing the page. Root cause: `StatusBadge` threw on an undefined status,
+  and failed API responses were being fed into component state.
+- Multi-project port collisions resolved. Projects upgraded from 1.x all kept
+  the shared default dashboard and daemon ports, so only the first project's
+  dashboard would ever open. Three fixes work together: `openwolf update`
+  reassigns a free port pair when a project's ports collide with another
+  registered project, `openwolf dashboard` starts this project's server on a
+  free port when the configured one is held by another project's daemon
+  (instead of opening a URL that gets a 401), and the daemon accepts an
+  `OPENWOLF_DASHBOARD_PORT` override. Fresh installs already received unique
+  ports; this brings upgraded projects to parity.
+
 ## [2.0.0] - 2026-07-15
 
 OpenWolf 2.0 turns the second brain for Claude Code into a context layer for

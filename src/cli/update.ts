@@ -228,6 +228,16 @@ async function updateProject(
       }
     } catch {}
 
+    // 5a3. Resolve port collisions across registered projects. Projects
+    // upgraded from 1.x share the old default ports (18790/18791); when more
+    // than one is registered their daemons and dashboards collide, which is
+    // why the dashboard used to only ever open the first project. Reassign a
+    // free pair when this project's ports overlap another registered project.
+    try {
+      const reassigned = reassignCollidingPorts(root, wolfDir);
+      if (reassigned) console.log(`    ✓ Ports reassigned to ${reassigned} (avoids collision with another project)`);
+    } catch {}
+
     // 5b. Create STATUS.md if missing (projects predating the handoff doc)
     const statusPath = path.join(wolfDir, "STATUS.md");
     if (!fs.existsSync(statusPath)) {
@@ -297,6 +307,39 @@ async function updateProject(
     const msg = err instanceof Error ? err.message : String(err);
     return { project, status: "error", message: msg };
   }
+}
+
+/**
+ * If this project's dashboard/daemon ports collide with another registered
+ * project, allocate a free pair. Returns "daemon/dashboard" if reassigned,
+ * else null. Mirrors the free-port logic in cli/init.ts reconcileConfig.
+ */
+function reassignCollidingPorts(root: string, wolfDir: string): string | null {
+  const cfgPath = path.join(wolfDir, "config.json");
+  const cfg = readJSON<any>(cfgPath, null as any);
+  if (!cfg?.openwolf?.dashboard) return null;
+
+  const norm = (p: string) => (process.platform === "win32" ? path.resolve(p).toLowerCase() : path.resolve(p));
+  const mine = norm(root);
+  const used = new Set<number>();
+  for (const proj of getRegisteredProjects(false)) {
+    if (norm(proj.root) === mine) continue;
+    const oc = readJSON<any>(path.join(proj.root, ".wolf", "config.json"), null as any)?.openwolf;
+    if (typeof oc?.daemon?.port === "number") used.add(oc.daemon.port);
+    if (typeof oc?.dashboard?.port === "number") used.add(oc.dashboard.port);
+  }
+
+  const myDash = cfg.openwolf.dashboard.port;
+  const myDaemon = cfg.openwolf.daemon?.port;
+  if (!used.has(myDash) && (typeof myDaemon !== "number" || !used.has(myDaemon))) return null;
+
+  const nextFree = (base: number): number => { let p = base; while (used.has(p)) p++; used.add(p); return p; };
+  cfg.openwolf.daemon = cfg.openwolf.daemon || {};
+  cfg.openwolf.dashboard = cfg.openwolf.dashboard || {};
+  cfg.openwolf.daemon.port = nextFree(18790);
+  cfg.openwolf.dashboard.port = nextFree(18791);
+  writeJSON(cfgPath, cfg);
+  return `${cfg.openwolf.daemon.port}/${cfg.openwolf.dashboard.port}`;
 }
 
 /** Fill STATUS.md template placeholders — mirrors seedStatus in init.ts. */
