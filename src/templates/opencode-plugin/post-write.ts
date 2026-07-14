@@ -73,7 +73,9 @@ function updateAnatomy(wolfDir: string, absolutePath: string, projectRoot: strin
         mtimeMs,
         updatedAt: new Date().toISOString(),
         source: "hook",
-        symbols: store.files[relPathLocal]?.symbols,
+        // The plugin cannot recompute symbols; drop them so stale line
+        // ranges never misdirect a slice read (the next scan restores them).
+        symbols: undefined,
       }
       store.meta.lastScanned = new Date().toISOString()
       renderToFile(wolfDir, store)

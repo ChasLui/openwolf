@@ -156,18 +156,34 @@ export function saveStore(wolfDir: string, store: AnatomyStoreData): void {
 }
 
 export function renderStore(store: AnatomyStoreData): string {
-  const sections = new Map<string, AnatomyEntry[]>()
+  const bySection = new Map<string, Array<{ file: string; entry: StoreFileEntry }>>()
   for (const [relPath, entry] of Object.entries(store.files)) {
     const dir = relPath.includes("/") ? relPath.slice(0, relPath.lastIndexOf("/") + 1) : "./"
-    if (!sections.has(dir)) sections.set(dir, [])
-    sections.get(dir)!.push({ file: relPath.slice(relPath.lastIndexOf("/") + 1), description: entry.description, tokens: entry.tokens })
+    if (!bySection.has(dir)) bySection.set(dir, [])
+    bySection.get(dir)!.push({ file: relPath.slice(relPath.lastIndexOf("/") + 1), entry })
   }
-  return serializeAnatomy(sections, {
-    lastScanned: store.meta.lastScanned,
-    fileCount: Object.keys(store.files).length,
-    hits: store.meta.hits,
-    misses: store.meta.misses,
-  })
+  const lines: string[] = [
+    "# anatomy.md",
+    "",
+    `> Auto-maintained by OpenWolf. Last scanned: ${store.meta.lastScanned}`,
+    `> Files: ${Object.keys(store.files).length} tracked | Anatomy hits: ${store.meta.hits} | Misses: ${store.meta.misses}`,
+    "",
+  ]
+  const keys = [...bySection.keys()].sort()
+  for (const key of keys) {
+    lines.push(`## ${key}`)
+    lines.push("")
+    const entries = bySection.get(key)!.sort((a, b) => a.file.localeCompare(b.file))
+    for (const { file, entry } of entries) {
+      const desc = entry.description ? ` — ${entry.description}` : ""
+      lines.push(`- \`${file}\`${desc} (~${entry.tokens} tok)`)
+      for (const sym of entry.symbols ?? []) {
+        lines.push(`  - ${sym.kind} \`${sym.name}\` L${sym.startLine}-${sym.endLine} (~${sym.tokens} tok)`)
+      }
+    }
+    lines.push("")
+  }
+  return lines.join("\n")
 }
 
 export function renderToFile(wolfDir: string, store: AnatomyStoreData): void {

@@ -159,24 +159,45 @@ export function sectionKeyOf(relPath: string): string {
   return dir === "." ? "./" : dir + "/";
 }
 
-/** Render the store to markdown — byte-identical to the legacy format. */
+/**
+ * Render the store to markdown. For entries without symbols the output is
+ * byte-identical to the legacy serializeAnatomy format. Symbols render as
+ * two-space-indented sub-bullets, which every legacy parser skips (they match
+ * neither the section nor the entry regex):
+ *
+ *   - `shared.ts` — Shared hook utilities (~3200 tok)
+ *     - fn `parseAnatomy` L82-104 (~180 tok)
+ */
 export function renderStore(store: AnatomyStoreData): string {
-  const sections = new Map<string, AnatomyEntry[]>();
+  const bySection = new Map<string, Array<{ file: string; entry: StoreFileEntry }>>();
   for (const [relPath, entry] of Object.entries(store.files)) {
     const key = sectionKeyOf(relPath);
-    if (!sections.has(key)) sections.set(key, []);
-    sections.get(key)!.push({
-      file: relPath.slice(relPath.lastIndexOf("/") + 1),
-      description: entry.description,
-      tokens: entry.tokens,
-    });
+    if (!bySection.has(key)) bySection.set(key, []);
+    bySection.get(key)!.push({ file: relPath.slice(relPath.lastIndexOf("/") + 1), entry });
   }
-  return serializeAnatomy(sections, {
-    lastScanned: store.meta.lastScanned,
-    fileCount: Object.keys(store.files).length,
-    hits: store.meta.hits,
-    misses: store.meta.misses,
-  });
+
+  const lines: string[] = [
+    "# anatomy.md",
+    "",
+    `> Auto-maintained by OpenWolf. Last scanned: ${store.meta.lastScanned}`,
+    `> Files: ${Object.keys(store.files).length} tracked | Anatomy hits: ${store.meta.hits} | Misses: ${store.meta.misses}`,
+    "",
+  ];
+  const keys = [...bySection.keys()].sort();
+  for (const key of keys) {
+    lines.push(`## ${key}`);
+    lines.push("");
+    const entries = bySection.get(key)!.sort((a, b) => a.file.localeCompare(b.file));
+    for (const { file, entry } of entries) {
+      const desc = entry.description ? ` — ${entry.description}` : "";
+      lines.push(`- \`${file}\`${desc} (~${entry.tokens} tok)`);
+      for (const sym of entry.symbols ?? []) {
+        lines.push(`  - ${sym.kind} \`${sym.name}\` L${sym.startLine}-${sym.endLine} (~${sym.tokens} tok)`);
+      }
+    }
+    lines.push("");
+  }
+  return lines.join("\n");
 }
 
 /** Write the rendered markdown atomically and pin its hash in the store. */
@@ -250,20 +271,26 @@ export function lookupEntry(
   wolfDir: string,
   projectDir: string,
   normalizedFile: string
-): { file: string; description: string; tokens: number } | null {
+): { file: string; description: string; tokens: number; symbols?: SymbolEntry[]; size?: number; mtimeMs?: number } | null {
   const rel = normalizedFile.startsWith(projectDir + "/")
     ? normalizedFile.slice(projectDir.length + 1)
     : normalizedFile.startsWith("/") ? null : normalizedFile;
 
   const store = loadStore(wolfDir);
   if (store) {
+    const toResult = (rp: string, e: StoreFileEntry) => ({
+      file: rp.slice(rp.lastIndexOf("/") + 1),
+      description: e.description,
+      tokens: e.tokens,
+      symbols: e.symbols,
+      size: e.size,
+      mtimeMs: e.mtimeMs,
+    });
     const hit = rel ? store.files[rel] : undefined;
-    if (hit) {
-      return { file: rel!.slice(rel!.lastIndexOf("/") + 1), description: hit.description, tokens: hit.tokens };
-    }
+    if (hit) return toResult(rel!, hit);
     for (const [rp, e] of Object.entries(store.files)) {
       if (normalizedFile === rp || normalizedFile.endsWith("/" + rp)) {
-        return { file: rp.slice(rp.lastIndexOf("/") + 1), description: e.description, tokens: e.tokens };
+        return toResult(rp, e);
       }
     }
     return null;

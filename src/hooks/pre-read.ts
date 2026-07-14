@@ -1,3 +1,4 @@
+import * as fs from "node:fs";
 import * as path from "node:path";
 import {
   getWolfDir, ensureWolfDir, readJSON, writeJSON,
@@ -70,6 +71,25 @@ async function main(): Promise<void> {
     process.stderr.write(
       `📋 OpenWolf anatomy: ${entry.file} — ${entry.description} (~${entry.tokens} tok)\n`
     );
+
+    // Symbol hint (F2b Phase B): point at slices of big files. Suppressed if
+    // the on-disk file no longer matches what was indexed — a stale line
+    // range that misdirects an offset read is worse than no hint at all.
+    if (entry.symbols && entry.symbols.length > 0) {
+      let fresh = false;
+      try {
+        const st = fs.statSync(filePath);
+        fresh = (entry.size === undefined || st.size === entry.size) &&
+                (entry.mtimeMs === undefined || Math.abs(st.mtimeMs - entry.mtimeMs) < 1);
+      } catch {}
+      if (fresh) {
+        const top = [...entry.symbols].sort((a, b) => b.tokens - a.tokens).slice(0, 5);
+        const list = top.map((s) => `${s.kind} ${s.name} L${s.startLine}-${s.endLine} ~${s.tokens} tok`).join("; ");
+        process.stderr.write(
+          `   ↳ symbols: ${list}. Read with offset/limit to fetch just the part you need.\n`
+        );
+      }
+    }
   }
 
   if (found) {

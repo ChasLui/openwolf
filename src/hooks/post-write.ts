@@ -8,6 +8,7 @@ import {
 } from "./shared.js";
 import { loadStoreReconciled, saveStore, renderToFile, sha256 } from "./anatomy-store.js";
 import { withAnatomyLock, HOOK_LOCK_BUDGET_MS } from "./anatomy-lock.js";
+import { extractSymbols, symbolsSupported, SYMBOL_MIN_TOKENS } from "./symbol-extractor.js";
 
 // File types where a value/string change is normal content editing, not a bug
 // fix — auto bug detection never runs on these (see autoDetectBugFix). Without
@@ -111,6 +112,13 @@ async function main(): Promise<void> {
       mtimeMs = st.mtimeMs;
     } catch {}
 
+    // Symbols are recomputed on every write (never carried over — the
+    // content just changed, so old line ranges would misdirect slice reads).
+    const symbols =
+      tokens >= SYMBOL_MIN_TOKENS && symbolsSupported(ext)
+        ? extractSymbols(fileContent, ext)
+        : undefined;
+
     withAnatomyLock(wolfDir, HOOK_LOCK_BUDGET_MS, () => {
       const store = loadStoreReconciled(wolfDir, projectRoot);
       store.files[relPathLocal] = {
@@ -121,7 +129,7 @@ async function main(): Promise<void> {
         mtimeMs,
         updatedAt: new Date().toISOString(),
         source: "hook",
-        symbols: store.files[relPathLocal]?.symbols,
+        symbols: symbols && symbols.length > 0 ? symbols : undefined,
       };
       store.meta.lastScanned = new Date().toISOString();
       renderToFile(wolfDir, store);

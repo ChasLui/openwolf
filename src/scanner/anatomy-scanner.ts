@@ -7,6 +7,7 @@ import {
   type AnatomyStoreData, type StoreFileEntry,
 } from "../hooks/anatomy-store.js";
 import { withAnatomyLock, CLI_LOCK_BUDGET_MS } from "../hooks/anatomy-lock.js";
+import { extractSymbols, symbolsSupported, SYMBOL_MIN_TOKENS } from "../hooks/symbol-extractor.js";
 import { readJSON, writeJSON, writeText } from "../utils/fs-safe.js";
 import { normalizePath } from "../utils/paths.js";
 
@@ -144,6 +145,10 @@ function walkDir(
 
       const desc = capDescription(extractDescription(fullPath));
       const tokens = estimateTokens(content, fullPath);
+      const symbols =
+        tokens >= SYMBOL_MIN_TOKENS && symbolsSupported(ext)
+          ? extractSymbols(content, ext)
+          : undefined;
 
       files[relPath] = {
         description: desc,
@@ -153,6 +158,7 @@ function walkDir(
         mtimeMs: stat.mtimeMs,
         updatedAt: new Date().toISOString(),
         source: "scan",
+        symbols: symbols && symbols.length > 0 ? symbols : undefined,
       };
 
       totalFiles++;

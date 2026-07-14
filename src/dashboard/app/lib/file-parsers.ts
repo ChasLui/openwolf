@@ -1,4 +1,13 @@
+export interface AnatomySymbol {
+  name: string;
+  kind: string;
+  startLine: number;
+  endLine: number;
+  tokens: number;
+}
+
 export interface AnatomyEntry {
+  symbols?: AnatomySymbol[];
   file: string;
   description: string;
   tokens: number;

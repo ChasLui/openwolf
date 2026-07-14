@@ -122,7 +122,27 @@ export function useWolfData(): WolfData {
   const [client, setClient] = useState<WolfClient | null>(null);
 
   const processFiles = useCallback((files: Record<string, string>) => {
-    if (files["anatomy.md"]) setAnatomy(parseAnatomy(files["anatomy.md"]));
+    if (files["anatomy-index.json"]) {
+      try {
+        const store = JSON.parse(files["anatomy-index.json"]);
+        const entries = Object.entries(store.files ?? {}).map(([relPath, e]: [string, any]) => {
+          const slash = relPath.lastIndexOf("/");
+          return {
+            file: slash === -1 ? relPath : relPath.slice(slash + 1),
+            description: e.description ?? "",
+            tokens: e.tokens ?? 0,
+            section: slash === -1 ? "./" : relPath.slice(0, slash + 1),
+            symbols: e.symbols,
+          };
+        });
+        setAnatomy({
+          entries,
+          metadata: { files: entries.length, hits: store.meta?.hits ?? 0, misses: store.meta?.misses ?? 0 },
+        });
+      } catch {
+        if (files["anatomy.md"]) setAnatomy(parseAnatomy(files["anatomy.md"]));
+      }
+    } else if (files["anatomy.md"]) setAnatomy(parseAnatomy(files["anatomy.md"]));
     if (files["cerebrum.md"]) setCerebrum(parseCerebrum(files["cerebrum.md"]));
     if (files["memory.md"]) setMemory(parseMemory(files["memory.md"]));
     if (files["token-ledger.json"]) {
