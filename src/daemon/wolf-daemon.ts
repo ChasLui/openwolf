@@ -171,7 +171,7 @@ app.get("/api/files", (_req, res) => {
   const wolfFiles = [
     "OPENWOLF.md", "identity.md", "cerebrum.md", "memory.md", "anatomy.md",
     "config.json", "token-ledger.json", "buglog.json",
-    "cron-manifest.json", "cron-state.json", "STATUS.md", "_scan-state.json",
+    "cron-manifest.json", "cron-state.json", "STATUS.md", "_scan-state.json", "anatomy-index.json",
   ];
   for (const file of wolfFiles) {
     try {
@@ -307,7 +307,7 @@ function handleDashboardCommand(msg: { type: string; task_id?: string }): void {
         const wolfFiles = [
           "OPENWOLF.md", "identity.md", "cerebrum.md", "memory.md", "anatomy.md",
           "config.json", "token-ledger.json", "buglog.json",
-          "cron-manifest.json", "cron-state.json", "STATUS.md", "_scan-state.json",
+          "cron-manifest.json", "cron-state.json", "STATUS.md", "_scan-state.json", "anatomy-index.json",
         ];
         for (const file of wolfFiles) {
           try {

@@ -10,6 +10,7 @@ import { isWindows } from "../utils/platform.js";
 import { registerProject, getRegisteredProjects } from "./registry.js";
 import { resolveAgents, detectInstalledAgents } from "../agents/index.js";
 import { installSkills } from "../agents/skills.js";
+import { newStore, importFromMarkdown, saveStore, loadStore, STORE_FILE, sha256 as storeSha256 } from "../hooks/anatomy-store.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -247,23 +248,20 @@ export async function initCommand(options?: { agent?: string[] }): Promise<void>
     writeText(claudeMdPath, snippetContent);
   }
 
-  // --- Anatomy scan: only on fresh init ---
-  let fileCount = 0;
-  if (!isUpgrade) {
+  // --- One-time anatomy store migration for upgrades (F2b) ---
+  if (isUpgrade) {
     try {
-      fileCount = scanProject(wolfDir, projectRoot);
-    } catch {
-      console.log("  Anatomy scan deferred — will run on first session.");
-    }
-  } else {
-    // On upgrade, read existing count
-    try {
-      const anatomyContent = readText(path.join(wolfDir, "anatomy.md"));
-      const m = anatomyContent.match(/Files:\s*(\d+)/);
-      fileCount = m ? parseInt(m[1], 10) : 0;
-    } catch {
-      fileCount = 0;
-    }
+      if (!fs.existsSync(path.join(wolfDir, STORE_FILE))) {
+        const md = readText(path.join(wolfDir, "anatomy.md"));
+        if (md) {
+          const store = newStore();
+          importFromMarkdown(store, md, projectRoot);
+          store.meta.renderedHash = storeSha256(md);
+          saveStore(wolfDir, store);
+          console.log(`  ✓ anatomy-index.json created (migrated from anatomy.md)`);
+        }
+      }
+    } catch {}
   }
 
   // --- Daemon ---
@@ -332,12 +330,30 @@ export async function initCommand(options?: { agent?: string[] }): Promise<void>
     }
   } catch {}
 
-  // --- Bundled skills (Workstream H): /security-audit, /redesign ---
+  // --- Bundled skills (Workstream H): /security-audit, /reframe ---
   try {
     for (const line of installSkills(projectRoot, actualTemplatesDir, installedAgents)) {
       console.log(`  ✓ ${line}`);
     }
   } catch {}
+
+  // --- Anatomy scan: runs LAST so the index reflects everything init created ---
+  let fileCount = 0;
+  if (!isUpgrade) {
+    try {
+      fileCount = scanProject(wolfDir, projectRoot);
+    } catch {
+      console.log("  Anatomy scan deferred — will run on first session.");
+    }
+  } else {
+    const store = loadStore(wolfDir);
+    if (store) {
+      fileCount = Object.keys(store.files).length;
+    } else {
+      const m = readText(path.join(wolfDir, "anatomy.md")).match(/Files:\s*(\d+)/);
+      if (m) fileCount = parseInt(m[1], 10);
+    }
+  }
 
   // --- Summary ---
   console.log("");
@@ -575,6 +591,8 @@ function copyHookScripts(wolfDir: string): void {
     "precompact.js",
     "stop.js",
     "shared.js",
+    "anatomy-store.js",
+    "anatomy-lock.js",
   ];
 
   let copiedAny = false;

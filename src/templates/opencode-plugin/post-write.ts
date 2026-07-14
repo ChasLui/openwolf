@@ -2,7 +2,7 @@ import * as fs from "node:fs"
 import * as path from "node:path"
 import * as crypto from "node:crypto"
 import { getWolfDir, writeJSON, readJSON, appendMarkdown, timeShort, normalizePath, estimateTokens } from "./fs.js"
-import { parseAnatomy, serializeAnatomy, extractDescription } from "./anatomy.js"
+import { extractDescription, withAnatomyLock, loadStoreReconciled, saveStore, renderToFile, sha256, LOCK_BUDGET_MS } from "./anatomy.js"
 import type { PartialSessionState, FixDetection } from "./types.js"
 
 export function handlePostWrite(
@@ -39,19 +39,7 @@ export function handlePostWrite(
 
 function updateAnatomy(wolfDir: string, absolutePath: string, projectRoot: string, content: string): void {
   try {
-    const anatomyPath = path.join(wolfDir, "anatomy.md")
-    let anatomyContent: string
-    try {
-      anatomyContent = fs.readFileSync(anatomyPath, "utf-8")
-    } catch {
-      anatomyContent = "# anatomy.md\n\n> Auto-maintained by OpenWolf.\n"
-    }
-
-    const sections = parseAnatomy(anatomyContent)
     const relPathLocal = normalizePath(path.relative(projectRoot, absolutePath))
-    const dir = path.dirname(relPathLocal)
-    const fileName = path.basename(relPathLocal)
-    const sectionKey = dir === "." ? "./" : dir + "/"
 
     let fileContent = ""
     try {
@@ -67,33 +55,30 @@ function updateAnatomy(wolfDir: string, absolutePath: string, projectRoot: strin
     const type = codeExts.has(ext) ? "code" : proseExts.has(ext) ? "prose" : "mixed"
     const tokens = estimateTokens(fileContent, type as "code" | "prose" | "mixed")
 
-    if (!sections.has(sectionKey)) sections.set(sectionKey, [])
-    const entries = sections.get(sectionKey)!
-    const idx = entries.findIndex((e) => e.file === fileName)
-    if (idx !== -1) {
-      entries[idx] = { file: fileName, description: desc, tokens }
-    } else {
-      entries.push({ file: fileName, description: desc, tokens })
-    }
-
-    let fileCount = 0
-    for (const [, list] of sections) fileCount += list.length
-
-    const serialized = serializeAnatomy(sections, {
-      lastScanned: new Date().toISOString(),
-      fileCount,
-      hits: 0,
-      misses: 0,
-    })
-
-    const tmp = anatomyPath + "." + crypto.randomBytes(4).toString("hex") + ".tmp"
+    let size: number | undefined
+    let mtimeMs: number | undefined
     try {
-      fs.writeFileSync(tmp, serialized, "utf-8")
-      fs.renameSync(tmp, anatomyPath)
-    } catch {
-      try { fs.writeFileSync(anatomyPath, serialized, "utf-8") } catch {}
-      try { fs.unlinkSync(tmp) } catch {}
-    }
+      const st = fs.statSync(absolutePath)
+      size = st.size
+      mtimeMs = st.mtimeMs
+    } catch {}
+
+    withAnatomyLock(wolfDir, LOCK_BUDGET_MS, () => {
+      const store = loadStoreReconciled(wolfDir, projectRoot)
+      store.files[relPathLocal] = {
+        description: desc,
+        tokens,
+        hash: sha256(fileContent).slice(0, 16),
+        size,
+        mtimeMs,
+        updatedAt: new Date().toISOString(),
+        source: "hook",
+        symbols: store.files[relPathLocal]?.symbols,
+      }
+      store.meta.lastScanned = new Date().toISOString()
+      renderToFile(wolfDir, store)
+      saveStore(wolfDir, store)
+    })
   } catch {}
 }
 

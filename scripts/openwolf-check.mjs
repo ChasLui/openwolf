@@ -59,7 +59,7 @@ report.agentsInConfig = cfg?.openwolf?.agents ?? null;
 report.skills = ["security-audit", "reframe"].filter((s) => exists(path.join(root, ".claude", "commands", `${s}.md`)));
 
 // ── Recency: newest activity across the state files ─────────────────────────
-const activityFiles = ["memory.md", "token-ledger.json", "buglog.json", "anatomy.md", path.join("hooks", "_session.json")];
+const activityFiles = ["memory.md", "token-ledger.json", "buglog.json", "anatomy.md", "anatomy-index.json", path.join("hooks", "_session.json")];
 const newest = activityFiles
   .map((f) => ({ f, t: mtime(path.join(wolfDir, f)) }))
   .filter((x) => x.t != null)

@@ -27,7 +27,7 @@ You are working in an OpenWolf-managed project. These rules apply every turn.
 
 1. Check `.wolf/anatomy.md` BEFORE reading any file. It has a 2-3 line description and token estimate for every file in the project.
 2. If the description in anatomy.md is sufficient for your task, do NOT read the full file.
-3. If a file is not in anatomy.md, search with Grep/Glob, then update anatomy.md with the new entry.
+3. If a file is not in anatomy.md, search with Grep/Glob. anatomy.md is rendered from `.wolf/anatomy-index.json`; you may edit descriptions in anatomy.md (they are absorbed on the next update) but do not reorder or reformat it. Regenerate with `openwolf scan`.
 
 ## Code Generation
 

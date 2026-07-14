@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { execFileSync } from "node:child_process";
 import { getWolfDir, ensureWolfDir, writeJSON, appendMarkdown, readJSON, timestamp, timeShort, estimateTokens, readStdin, detectAgent } from "./shared.js";
+import { loadStore } from "./anatomy-store.js";
 
 // ─── Session digest (Workstream E/F: model-aware context budgeting) ─────────
 //
@@ -83,10 +84,15 @@ function buildSessionDigest(wolfDir: string, budget: number): string {
 
   // 4. Anatomy pointer (one line — the index itself stays on disk).
   try {
-    const anatomy = fs.readFileSync(path.join(wolfDir, "anatomy.md"), "utf-8");
-    const m = anatomy.match(/Files:\s*(\d+)\s*tracked/i);
-    if (m) {
-      tryAdd(`anatomy.md tracks ${m[1]} files with descriptions + token sizes — check it before reading any file.`);
+    const store = loadStore(wolfDir);
+    let count: number | null = store ? Object.keys(store.files).length : null;
+    if (count === null) {
+      const anatomy = fs.readFileSync(path.join(wolfDir, "anatomy.md"), "utf-8");
+      const m = anatomy.match(/Files:\s*(\d+)\s*tracked/i);
+      if (m) count = parseInt(m[1], 10);
+    }
+    if (count !== null && count > 0) {
+      tryAdd(`anatomy.md tracks ${count} files with descriptions + token sizes — check it before reading any file.`);
     }
   } catch {}
 

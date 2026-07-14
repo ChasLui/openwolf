@@ -2,10 +2,12 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as crypto from "node:crypto";
 import {
-  getWolfDir, ensureWolfDir, readJSON, writeJSON, readMarkdown, parseAnatomy, serializeAnatomy,
+  getWolfDir, ensureWolfDir, readJSON, writeJSON, readMarkdown,
   extractDescription, estimateTokens, appendMarkdown, timeShort, readStdin, normalizePath,
   isSensitiveFile, getProjectDir
 } from "./shared.js";
+import { loadStoreReconciled, saveStore, renderToFile, sha256 } from "./anatomy-store.js";
+import { withAnatomyLock, HOOK_LOCK_BUDGET_MS } from "./anatomy-lock.js";
 
 // File types where a value/string change is normal content editing, not a bug
 // fix — auto bug detection never runs on these (see autoDetectBugFix). Without
@@ -81,21 +83,11 @@ async function main(): Promise<void> {
   const oldStr = input.tool_input?.old_string ?? "";
   const newStr = input.tool_input?.new_string ?? "";
 
-  // 1. Update anatomy.md
+  // 1. Update the anatomy store, then re-render anatomy.md from it.
+  //    All of this happens under the anatomy lock; if the lock cannot be
+  //    acquired within budget we skip — a later writer converges the state.
   try {
-    const anatomyPath = path.join(wolfDir, "anatomy.md");
-    let anatomyContent: string;
-    try {
-      anatomyContent = fs.readFileSync(anatomyPath, "utf-8");
-    } catch {
-      anatomyContent = "# anatomy.md\n\n> Auto-maintained by OpenWolf.\n";
-    }
-
-    const sections = parseAnatomy(anatomyContent);
     const relPathLocal = normalizePath(path.relative(projectRoot, absolutePath));
-    const dir = path.dirname(relPathLocal);
-    const fileName = path.basename(relPathLocal);
-    const sectionKey = dir === "." ? "./" : dir + "/";
 
     let fileContent = "";
     try {
@@ -111,33 +103,30 @@ async function main(): Promise<void> {
     const type = codeExts.has(ext) ? "code" : proseExts.has(ext) ? "prose" : "mixed";
     const tokens = estimateTokens(fileContent, type as "code" | "prose" | "mixed");
 
-    if (!sections.has(sectionKey)) sections.set(sectionKey, []);
-    const entries = sections.get(sectionKey)!;
-    const idx = entries.findIndex((e) => e.file === fileName);
-    if (idx !== -1) {
-      entries[idx] = { file: fileName, description: desc, tokens };
-    } else {
-      entries.push({ file: fileName, description: desc, tokens });
-    }
-
-    let fileCount = 0;
-    for (const [, list] of sections) fileCount += list.length;
-
-    const serialized = serializeAnatomy(sections, {
-      lastScanned: new Date().toISOString(),
-      fileCount,
-      hits: 0,
-      misses: 0,
-    });
-
-    const tmp = anatomyPath + "." + crypto.randomBytes(4).toString("hex") + ".tmp";
+    let size: number | undefined;
+    let mtimeMs: number | undefined;
     try {
-      fs.writeFileSync(tmp, serialized, "utf-8");
-      fs.renameSync(tmp, anatomyPath);
-    } catch {
-      try { fs.writeFileSync(anatomyPath, serialized, "utf-8"); } catch {}
-      try { fs.unlinkSync(tmp); } catch {}
-    }
+      const st = fs.statSync(absolutePath);
+      size = st.size;
+      mtimeMs = st.mtimeMs;
+    } catch {}
+
+    withAnatomyLock(wolfDir, HOOK_LOCK_BUDGET_MS, () => {
+      const store = loadStoreReconciled(wolfDir, projectRoot);
+      store.files[relPathLocal] = {
+        description: desc,
+        tokens,
+        hash: sha256(fileContent).slice(0, 16),
+        size,
+        mtimeMs,
+        updatedAt: new Date().toISOString(),
+        source: "hook",
+        symbols: store.files[relPathLocal]?.symbols,
+      };
+      store.meta.lastScanned = new Date().toISOString();
+      renderToFile(wolfDir, store);
+      saveStore(wolfDir, store);
+    });
   } catch {}
 
   // 2. Append richer entry to memory.md

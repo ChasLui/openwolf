@@ -14,6 +14,7 @@ import { getRegisteredProjects, registerProject, type RegisteredProject } from "
 import { readJSON, writeJSON, readText, writeText, safeCopyFile } from "../utils/fs-safe.js";
 import { ensureDir } from "../utils/paths.js";
 import { resolveAgents, availableAgents } from "../agents/index.js";
+import { newStore, importFromMarkdown, saveStore, STORE_FILE, sha256 as storeSha256 } from "../hooks/anatomy-store.js";
 import { installSkills } from "../agents/skills.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -44,7 +45,7 @@ const ALWAYS_OVERWRITE = ["OPENWOLF.md", "reframe-frameworks.md"];
 // can still recover it.
 const USER_DATA_FILES = [
   "config.json",
-  "identity.md", "cerebrum.md", "memory.md", "anatomy.md", "STATUS.md",
+  "identity.md", "cerebrum.md", "memory.md", "anatomy.md", "anatomy-index.json", "STATUS.md",
   "token-ledger.json", "buglog.json", "cron-manifest.json", "cron-state.json",
   "suggestions.json",
 ];
@@ -211,6 +212,21 @@ async function updateProject(
     const rulesContent = readTemplateContent("claude-rules-openwolf.md", templatesDir);
     writeText(path.join(rulesDir, "openwolf.md"), rulesContent);
     console.log(`    ✓ Claude rules updated`);
+
+    // 5a2. One-time anatomy store migration (projects predating the durable
+    // store): bootstrap anatomy-index.json from the existing anatomy.md.
+    try {
+      if (!fs.existsSync(path.join(wolfDir, STORE_FILE))) {
+        const md = readText(path.join(wolfDir, "anatomy.md"));
+        if (md) {
+          const store = newStore();
+          importFromMarkdown(store, md, root);
+          store.meta.renderedHash = storeSha256(md);
+          saveStore(wolfDir, store);
+          console.log(`    ✓ anatomy-index.json created (migrated from anatomy.md)`);
+        }
+      }
+    } catch {}
 
     // 5b. Create STATUS.md if missing (projects predating the handoff doc)
     const statusPath = path.join(wolfDir, "STATUS.md");
@@ -394,6 +410,7 @@ function copyHookScripts(wolfDir: string): void {
   const hookFiles = [
     "session-start.js", "pre-read.js", "pre-write.js",
     "post-read.js", "post-write.js", "precompact.js", "stop.js", "shared.js",
+    "anatomy-store.js", "anatomy-lock.js",
   ];
 
   if (sourceDir) {

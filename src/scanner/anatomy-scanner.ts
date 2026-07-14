@@ -2,14 +2,13 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { execFileSync } from "node:child_process";
 import { extractDescription, capDescription } from "./description-extractor.js";
+import {
+  newStore, renderStore, renderToFile, saveStore, loadStoreReconciled, sha256,
+  type AnatomyStoreData, type StoreFileEntry,
+} from "../hooks/anatomy-store.js";
+import { withAnatomyLock, CLI_LOCK_BUDGET_MS } from "../hooks/anatomy-lock.js";
 import { readJSON, writeJSON, writeText } from "../utils/fs-safe.js";
 import { normalizePath } from "../utils/paths.js";
-
-interface AnatomyEntry {
-  file: string;
-  description: string;
-  tokens: number;
-}
 
 interface WolfConfig {
   version: number;
@@ -100,10 +99,9 @@ function walkDir(
   rootDir: string,
   excludePatterns: string[],
   maxFiles: number,
-  entries: Map<string, AnatomyEntry[]>
+  files: Record<string, StoreFileEntry>
 ): void {
-  let totalFiles = 0;
-  for (const [, list] of entries) totalFiles += list.length;
+  let totalFiles = Object.keys(files).length;
   if (totalFiles >= maxFiles) return;
 
   let items: fs.Dirent[];
@@ -122,14 +120,15 @@ function walkDir(
     if (shouldExclude(relPath, excludePatterns)) continue;
 
     if (item.isDirectory()) {
-      walkDir(fullPath, rootDir, excludePatterns, maxFiles, entries);
+      walkDir(fullPath, rootDir, excludePatterns, maxFiles, files);
     } else if (item.isFile()) {
       const ext = path.extname(item.name).toLowerCase();
       if (BINARY_EXTENSIONS.has(ext)) continue;
 
       // Skip files > 1MB
+      let stat: fs.Stats;
       try {
-        const stat = fs.statSync(fullPath);
+        stat = fs.statSync(fullPath);
         if (stat.size > 1024 * 1024) continue;
       } catch {
         continue;
@@ -145,18 +144,16 @@ function walkDir(
 
       const desc = capDescription(extractDescription(fullPath));
       const tokens = estimateTokens(content, fullPath);
-      const section = normalizePath(path.relative(rootDir, dir)) || ".";
-      const sectionKey = section === "." ? "./" : section + "/";
 
-      if (!entries.has(sectionKey)) {
-        entries.set(sectionKey, []);
-      }
-
-      entries.get(sectionKey)!.push({
-        file: item.name,
+      files[relPath] = {
         description: desc,
         tokens,
-      });
+        hash: sha256(content).slice(0, 16),
+        size: stat.size,
+        mtimeMs: stat.mtimeMs,
+        updatedAt: new Date().toISOString(),
+        source: "scan",
+      };
 
       totalFiles++;
       if (totalFiles >= maxFiles) return;
@@ -164,69 +161,11 @@ function walkDir(
   }
 }
 
-export function serializeAnatomy(
-  sections: Map<string, AnatomyEntry[]>,
-  metadata: { lastScanned: string; fileCount: number; hits: number; misses: number }
-): string {
-  const lines: string[] = [
-    "# anatomy.md",
-    "",
-    `> Auto-maintained by OpenWolf. Last scanned: ${metadata.lastScanned}`,
-    `> Files: ${metadata.fileCount} tracked | Anatomy hits: ${metadata.hits} | Misses: ${metadata.misses}`,
-    "",
-  ];
-
-  const sortedKeys = [...sections.keys()].sort();
-
-  for (const key of sortedKeys) {
-    lines.push(`## ${key}`);
-    lines.push("");
-    const entries = sections.get(key)!;
-    entries.sort((a, b) => a.file.localeCompare(b.file));
-    for (const entry of entries) {
-      const desc = entry.description ? ` — ${entry.description}` : "";
-      lines.push(`- \`${entry.file}\`${desc} (~${entry.tokens} tok)`);
-    }
-    lines.push("");
-  }
-
-  return lines.join("\n");
-}
-
-export function parseAnatomy(content: string): Map<string, AnatomyEntry[]> {
-  const sections = new Map<string, AnatomyEntry[]>();
-  let currentSection = "";
-
-  for (const raw of content.split("\n")) {
-    const line = raw.replace(/\r$/, "");
-    const sectionMatch = line.match(/^## (.+)/);
-    if (sectionMatch) {
-      currentSection = sectionMatch[1].trim();
-      if (!sections.has(currentSection)) {
-        sections.set(currentSection, []);
-      }
-      continue;
-    }
-
-    if (!currentSection) continue;
-
-    const entryMatch = line.match(/^- `([^`]+)`(?:\s+—\s+(.+?))?\s*\(~(\d+)\s+tok\)$/);
-    if (entryMatch) {
-      sections.get(currentSection)!.push({
-        file: entryMatch[1],
-        description: entryMatch[2] || "",
-        tokens: parseInt(entryMatch[3], 10),
-      });
-    }
-  }
-
-  return sections;
-}
 
 /**
  * Scan the project and return the anatomy content and file count WITHOUT writing to disk.
  */
-export function buildAnatomy(wolfDir: string, projectRoot: string): { content: string; fileCount: number } {
+export function buildAnatomy(wolfDir: string, projectRoot: string): { content: string; fileCount: number; store: AnatomyStoreData } {
   const configPath = path.join(wolfDir, "config.json");
   const config = readJSON<WolfConfig>(configPath, {
     version: 1,
@@ -240,32 +179,44 @@ export function buildAnatomy(wolfDir: string, projectRoot: string): { content: s
     },
   });
 
-  const entries = new Map<string, AnatomyEntry[]>();
+  const store = newStore();
   walkDir(
     projectRoot,
     projectRoot,
     config.openwolf.anatomy.exclude_patterns,
     config.openwolf.anatomy.max_files,
-    entries
+    store.files
   );
 
-  let fileCount = 0;
-  for (const [, list] of entries) fileCount += list.length;
-
-  const serialized = serializeAnatomy(entries, {
-    lastScanned: new Date().toISOString(),
-    fileCount,
-    hits: 0,
-    misses: 0,
-  });
-
-  return { content: serialized, fileCount };
+  return { content: renderStore(store), fileCount: Object.keys(store.files).length, store };
 }
 
 export function scanProject(wolfDir: string, projectRoot: string): number {
-  const { content, fileCount } = buildAnatomy(wolfDir, projectRoot);
-  const anatomyPath = path.join(wolfDir, "anatomy.md");
-  writeText(anatomyPath, content);
+  const { fileCount, store: fresh } = buildAnatomy(wolfDir, projectRoot);
+
+  const result = withAnatomyLock(wolfDir, CLI_LOCK_BUDGET_MS, () => {
+    // Absorb md-side edits, then full-replace: the fresh disk walk defines
+    // the file set (this is the only code path allowed to delete entries).
+    const existing = loadStoreReconciled(wolfDir, projectRoot);
+    for (const [relPath, entry] of Object.entries(fresh.files)) {
+      const prev = existing.files[relPath];
+      if (prev && ((prev.hash && prev.hash === entry.hash) || prev.source === "md-import")) {
+        // Content unchanged or human-edited: keep the curated description.
+        if (prev.description) entry.description = prev.description;
+        if (prev.hash === entry.hash && prev.symbols) entry.symbols = prev.symbols;
+      }
+    }
+    existing.files = fresh.files;
+    existing.meta.lastScanned = new Date().toISOString();
+    renderToFile(wolfDir, existing);
+    saveStore(wolfDir, existing);
+    return true;
+  });
+  if (result === null) {
+    // Lock contention: fall back to writing the render directly (rare; the
+    // next locked writer reconciles via the md import path).
+    writeText(path.join(wolfDir, "anatomy.md"), renderStore(fresh));
+  }
 
   // Record scan state so hooks can detect staleness (git switches, editor
   // edits outside an agent) without rescanning — Workstream F2b.
@@ -284,67 +235,3 @@ export function scanProject(wolfDir: string, projectRoot: string): number {
   return fileCount;
 }
 
-export function updateAnatomyEntry(
-  wolfDir: string,
-  filePath: string,
-  projectRoot: string,
-  action: "upsert" | "delete"
-): void {
-  const anatomyPath = path.join(wolfDir, "anatomy.md");
-  let content: string;
-  try {
-    content = fs.readFileSync(anatomyPath, "utf-8");
-  } catch {
-    content = "# anatomy.md\n\n> Auto-maintained by OpenWolf.\n";
-  }
-
-  const sections = parseAnatomy(content);
-  const relPath = normalizePath(path.relative(projectRoot, filePath));
-  const dir = path.dirname(relPath);
-  const fileName = path.basename(relPath);
-  const sectionKey = dir === "." ? "./" : dir + "/";
-
-  if (action === "delete") {
-    const entries = sections.get(sectionKey);
-    if (entries) {
-      const idx = entries.findIndex((e) => e.file === fileName);
-      if (idx !== -1) entries.splice(idx, 1);
-      if (entries.length === 0) sections.delete(sectionKey);
-    }
-  } else {
-    // upsert
-    let fileContent: string;
-    try {
-      fileContent = fs.readFileSync(filePath, "utf-8");
-    } catch {
-      return;
-    }
-
-    const desc = capDescription(extractDescription(filePath));
-    const tokens = estimateTokens(fileContent, filePath);
-    const entry: AnatomyEntry = { file: fileName, description: desc, tokens };
-
-    if (!sections.has(sectionKey)) {
-      sections.set(sectionKey, []);
-    }
-    const entries = sections.get(sectionKey)!;
-    const idx = entries.findIndex((e) => e.file === fileName);
-    if (idx !== -1) {
-      entries[idx] = entry;
-    } else {
-      entries.push(entry);
-    }
-  }
-
-  let fileCount = 0;
-  for (const [, list] of sections) fileCount += list.length;
-
-  const serialized = serializeAnatomy(sections, {
-    lastScanned: new Date().toISOString(),
-    fileCount,
-    hits: 0,
-    misses: 0,
-  });
-
-  writeText(anatomyPath, serialized);
-}

@@ -1,8 +1,9 @@
 import * as path from "node:path";
 import {
-  getWolfDir, ensureWolfDir, readJSON, writeJSON, readMarkdown, parseAnatomy,
+  getWolfDir, ensureWolfDir, readJSON, writeJSON,
   estimateTokens, readStdin, normalizePath, getProjectDir
 } from "./shared.js";
+import { lookupEntry } from "./anatomy-store.js";
 
 interface SessionData {
   session_id: string;
@@ -62,24 +63,13 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Check anatomy.md for this file
-  const anatomyContent = readMarkdown(path.join(wolfDir, "anatomy.md"));
-  const sections = parseAnatomy(anatomyContent);
-  let found = false;
-
-  for (const [sectionKey, entries] of sections) {
-    for (const entry of entries) {
-      // Build the full relative path from the section key + filename for accurate matching
-      const entryRelPath = normalizePath(path.join(sectionKey, entry.file));
-      if (normalizedFile.endsWith(entryRelPath) || normalizedFile.endsWith("/" + entryRelPath)) {
-        process.stderr.write(
-          `📋 OpenWolf anatomy: ${entry.file} — ${entry.description} (~${entry.tokens} tok)\n`
-        );
-        found = true;
-        break;
-      }
-    }
-    if (found) break;
+  // Anatomy lookup: O(1) against the durable store, legacy md scan fallback.
+  const entry = lookupEntry(wolfDir, projectDir, normalizedFile);
+  const found = entry !== null;
+  if (entry) {
+    process.stderr.write(
+      `📋 OpenWolf anatomy: ${entry.file} — ${entry.description} (~${entry.tokens} tok)\n`
+    );
   }
 
   if (found) {
