@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="openwolf-icon.png" alt="OpenWolf" width="108" />
-</p>
-
 <h1 align="center">OpenWolf</h1>
 
 <p align="center">
@@ -31,6 +27,10 @@
   <a href="#security"><b>Security</b></a> &nbsp;&middot;&nbsp;
   <a href="#dashboard"><b>Dashboard</b></a> &nbsp;&middot;&nbsp;
   <a href="CHANGELOG.md"><b>Changelog</b></a>
+</p>
+
+<p align="center">
+  <img src="assets/openwolf-dashboard.png" alt="" width="900" />
 </p>
 
 ---
