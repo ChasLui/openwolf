@@ -24,7 +24,7 @@ The framework-specific prompts handle dependency installation, configuration, co
 
 ## Supported Frameworks
 
-Reframe includes profiles and prompts for 12 frameworks:
+Reframe includes profiles and prompts for 13 frameworks:
 
 | Framework | Description |
 |-----------|-------------|
@@ -40,6 +40,7 @@ Reframe includes profiles and prompts for 12 frameworks:
 | **Origin UI** | 400+ free shadcn-based components. Drop-in library for shadcn projects. |
 | **Headless UI** | Zero styling, full design control. Unstyled accessible primitives. |
 | **Cult UI** | AI-forward aesthetic. Full-stack patterns for modern AI applications. |
+| **Astryx** | Meta's design system. 160+ themeable components, StyleX-authored, agent-ready docs. |
 
 ---
 
@@ -61,6 +62,7 @@ Use this priority table to narrow the choice before reading full profiles:
 | Already using shadcn, need more components | Origin UI |
 | Full design control, no opinions | Headless UI |
 | AI-native product aesthetic | Cult UI |
+| Full design system + theming, agent-friendly docs | Astryx |
 
 ---
 

@@ -198,7 +198,7 @@ openwolf restore [backup]  Restore .wolf/ from a timestamped backup
 
 ## Reframe
 
-Ask your agent to help you pick a UI framework. OpenWolf ships a curated knowledge base of 12 frameworks (shadcn/ui, Aceternity, Magic UI, DaisyUI, HeroUI, Chakra, Flowbite, Preline, Park UI, Origin UI, Headless UI, Cult UI) with battle-tested migration prompts. The agent reads `.wolf/reframe-frameworks.md`, asks you a few questions, and executes the migration with the right prompt for your project.
+Ask your agent to help you pick a UI framework. OpenWolf ships a curated knowledge base of 13 frameworks (shadcn/ui, Aceternity, Magic UI, DaisyUI, HeroUI, Chakra, Flowbite, Preline, Park UI, Origin UI, Headless UI, Cult UI, Astryx) with battle-tested migration prompts. The agent reads `.wolf/reframe-frameworks.md`, asks you a few questions, and executes the migration with the right prompt for your project.
 
 Every Reframe prompt now enforces an **anti-generic design mandate**: a blocklist of the recognizable "AI-generated" aesthetic (purple gradient heroes, glassmorphism-everything, emoji headings, template feature grids) and positive principles — intentional typography, brand-derived palettes, distinctiveness as an acceptance criterion.
 
@@ -207,7 +207,7 @@ Every Reframe prompt now enforces an **anti-generic design mandate**: a blocklis
 `openwolf init` installs two slash commands into every configured agent (Claude Code, Codex, OpenCode):
 
 - **`/security-audit [scope]`** — layered audit: dependencies → secrets → injection surfaces → authn/authz → severity-ranked report, wired into `.wolf/buglog.json`.
-- **`/redesign [target] [--mode audit|fix]`** — audits or fixes UI against the anti-generic design principles.
+- **`/reframe [migrate [framework] | audit [target] | fix [target]]`** — one design brain: pick/migrate UI frameworks, or audit/fix existing UI against the anti-generic design principles.
 
 ## Supported Agents
 

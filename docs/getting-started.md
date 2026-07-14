@@ -135,7 +135,7 @@ Need help choosing a UI component framework? Just ask Claude:
 
 > Help me pick a UI framework for this project.
 
-OpenWolf ships a knowledge file (`.wolf/reframe-frameworks.md`) that Claude reads automatically. It covers 12 frameworks -- shadcn/ui, Aceternity UI, Magic UI, DaisyUI, HeroUI, Chakra UI, Flowbite, Preline UI, Park UI, Origin UI, Headless UI, and Cult UI -- with a decision tree, comparison matrix, and ready-made migration prompts.
+OpenWolf ships a knowledge file (`.wolf/reframe-frameworks.md`) that Claude reads automatically. It covers 13 frameworks -- shadcn/ui, Aceternity UI, Magic UI, DaisyUI, HeroUI, Chakra UI, Flowbite, Preline UI, Park UI, Origin UI, Headless UI, Cult UI, and Astryx -- with a decision tree, comparison matrix, and ready-made migration prompts.
 
 There is no CLI command for reframe. It works through Claude's normal conversation flow.
 
