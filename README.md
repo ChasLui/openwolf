@@ -1,19 +1,50 @@
 <p align="center">
-  <img src="demo.gif" alt="OpenWolf demo" width="640" />
+  <img src="openwolf-icon.png" alt="OpenWolf" width="108" />
 </p>
 
 <h1 align="center">OpenWolf</h1>
 
 <p align="center">
-  <strong>The second brain for Claude Code. Now for every AI coding assistant.</strong><br />
-  Improved context management, optimized architecture scaffolding, and smarter token utilization.<br />
-  Delivered through 7 invisible lifecycle hooks. Zero workflow changes.
+  <strong>The second brain for Claude Code. Now for every AI coding assistant.</strong>
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/openwolf"><img src="https://img.shields.io/npm/v/openwolf.svg" alt="npm version" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg" alt="License: AGPL-3.0" /></a>
-  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-20%2B-green.svg" alt="Node.js" /></a>
+  Improved context management, optimized architecture scaffolding, and smarter token utilization,<br />
+  delivered through 7 invisible lifecycle hooks. Zero workflow changes.
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/openwolf"><img src="https://img.shields.io/npm/v/openwolf?color=cb3837&label=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/openwolf"><img src="https://img.shields.io/npm/dm/openwolf?color=2ea44f&label=downloads" alt="npm downloads" /></a>
+  <a href="https://github.com/cytostack/openwolf/stargazers"><img src="https://img.shields.io/github/stars/cytostack/openwolf?color=444&label=stars" alt="GitHub stars" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License" /></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D20-2ea44f" alt="Node.js" /></a>
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178c6" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/agents-5%20supported-8957e5" alt="Agents supported" />
+</p>
+
+<p align="center">
+  <a href="#quick-start"><b>Quick Start</b></a> &nbsp;&middot;&nbsp;
+  <a href="#supported-agents"><b>Supported Agents</b></a> &nbsp;&middot;&nbsp;
+  <a href="#context-management"><b>Context Management</b></a> &nbsp;&middot;&nbsp;
+  <a href="#token-intelligence"><b>Token Intelligence</b></a> &nbsp;&middot;&nbsp;
+  <a href="#security"><b>Security</b></a> &nbsp;&middot;&nbsp;
+  <a href="#dashboard"><b>Dashboard</b></a> &nbsp;&middot;&nbsp;
+  <a href="CHANGELOG.md"><b>Changelog</b></a>
+</p>
+
+---
+
+| Without OpenWolf | With OpenWolf |
+|---|---|
+| The agent rereads a file it already saw (~2,000 tokens) | It reads the one-line description first, or skips the read entirely |
+| Whole-file reads just to find one function | Symbol-level hints give exact line ranges for `offset`/`limit` reads |
+| Context compaction wipes what the session did | A PreCompact snapshot and restore keep the work in context |
+| Every agent starts from a cold prompt | One shared `.wolf/` brain across Claude Code, Codex, OpenCode, Gemini, and Cursor |
+| No idea where your tokens went | Usage measured from harness transcripts, plus a live local dashboard |
+
+<p align="center">
+  <b>Saves you tokens?</b> <a href="https://github.com/cytostack/openwolf">Star the repo</a>, it helps other developers find OpenWolf.
 </p>
 
 ---
