@@ -33,7 +33,7 @@ openwolf init --agent claude           # Claude Code only, skip detection
 If `.wolf/` already exists, it reinitializes (overwrites templates, preserves learned data).
 
 ::: info
-If `.claude/settings.json` already has hooks, OpenWolf merges its hooks in -- existing hooks are not overwritten.
+If `.claude/settings.json` already has hooks, OpenWolf merges its hooks in, existing hooks are not overwritten.
 :::
 
 ---
@@ -51,9 +51,9 @@ openwolf status
 OpenWolf Status
 ===============
 
-  ✓ All 10 core files present
+  ✓ All core files present
   ✓ All 7 hook scripts present
-  ✓ Claude Code hooks registered (6 matchers)
+  ✓ Agent hooks registered (claude, codex)
 
 Token Stats:
   Sessions: 12

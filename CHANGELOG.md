@@ -4,6 +4,22 @@ All notable changes to OpenWolf are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and OpenWolf uses
 [Semantic Versioning](https://semver.org/).
 
+## [2.0.2] - 2026-07-15
+
+### Added
+
+- Antigravity agent adapter (beta, context-level via `AGENTS.md`).
+  `openwolf init --agent antigravity` and `--agent all` now include it, and
+  auto-detection picks it up when Antigravity is installed.
+
+### Changed
+
+- Documentation and website refreshed to reflect v2 throughout: the seven
+  lifecycle hooks including PreCompact, the durable anatomy store with
+  symbol-level reads, measured token usage, the redesigned dashboard, the
+  `/reframe` skill, and per-project dashboard ports. Retired Design QC
+  content removed. Positioning generalized across supported agents.
+
 ## [2.0.1] - 2026-07-15
 
 ### Fixed

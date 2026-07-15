@@ -1,6 +1,6 @@
 # Dashboard
 
-OpenWolf includes a real-time web dashboard for visibility into your project's AI activity. It's a React SPA served by the daemon.
+OpenWolf includes a real-time web dashboard for visibility into your project's agent activity. It is a React SPA served by the daemon, token-authenticated and bound to localhost.
 
 ## Launch
 
@@ -8,39 +8,42 @@ OpenWolf includes a real-time web dashboard for visibility into your project's A
 openwolf dashboard
 ```
 
-This starts the daemon (if not already running) and opens your browser to `http://localhost:18791`.
+This starts the daemon (if not already running) and opens your browser to the dashboard with a per-project token in the URL. Each project gets its own port automatically, so multiple projects' dashboards never collide.
 
 ## Theme
 
-The dashboard supports **dark and light modes**. Toggle using the sun/moon button in the sidebar header. Your preference is saved in localStorage.
+The dashboard supports **dark and light modes**. Toggle with the light/dark pill in the top navigation. Your preference is saved in localStorage. The design is a monochrome dot-matrix system with a single signal-red accent reserved for live, measured, and attention states.
 
 ## Panels
 
-The dashboard has 10 panels, accessible from the sidebar.
+The dashboard has nine panels, accessible from the top navigation: Overview, Tokens, Activity, Cron, Cerebrum, Memory, Anatomy, Bugs, and Insights.
 
 ### Overview
 
 The home screen. Shows:
-- **Project name and description**: detected from `package.json`, `Cargo.toml`, README, or `cerebrum.md`
-- **Daemon status**: green pulsing indicator when healthy
-- **Stat cards**: files tracked, total sessions, estimated tokens saved
-- **Recent activity**: last 5 entries from `memory.md`
+- **Tokens saved** (estimated), as the hero tile
+- **Measured usage** from the agent transcripts: input, output, cache read, and API calls
+- **Agents** wired to this project (Claude Code, Codex, OpenCode, and others)
+- **Stat row**: sessions, files tracked, reads/writes, re-reads blocked, anatomy hit rate, bugs on file
+- **Context health**: anatomy scan freshness, pinned git HEAD, session digest budget
+- **Next phase** from STATUS.md, and a weekly sessions dot chart
 
 ### Activity Timeline
 
-Chronological log of everything Claude has done. Each action is a card with timestamp, description, affected files, and token estimate.
+Chronological log of everything your agent has done. Each action is a card with timestamp, description, affected files, and token estimate.
 
 **Controls:** filter by date range (today / this week / all), search by keyword, toggle between grouped (by session) and flat views.
 
 ### Token Intelligence
 
-Two charts and waste alerts:
+Measured and estimated usage side by side:
 
-- **Usage Over Time**: area chart showing input (reads) and output (writes) tokens per session
-- **Token Comparison**: horizontal bar chart comparing:
-  - **Without OpenWolf** (estimated overhead, uses more tokens)
-  - **With OpenWolf** (actual, the savings)
-- **Waste Alerts**: flagged patterns like repeated reads, unnecessary full-file reads, memory bloat
+- **Headline tiles**: estimated lifetime tokens, measured lifetime tokens, cache reads, and estimated savings
+- **Usage over time**: per-session estimated input and output tokens, with the measured line overlaid in red where transcript data exists
+- **By agent**: a table of sessions, estimated tokens, and measured input/output/cache per agent
+- **Waste alerts**: flagged patterns like repeated reads, unnecessary full-file reads, and memory bloat
+
+Estimated figures use a character-ratio heuristic; measured figures are summed from the agent's transcript at session end. Only real numbers or clearly labeled estimates are shown.
 
 ### Cron Control Center
 
@@ -69,28 +72,25 @@ Most recent session is expanded by default.
 
 ### Anatomy Browser
 
-Interactive file tree built from `anatomy.md`. Directories are expandable nodes. Files show their description and a color-coded token badge:
-- **Green**: under 200 tokens
-- **Amber**: 200-1000 tokens
-- **Red**: over 1000 tokens
+Interactive file tree built from the anatomy index. Directories are expandable nodes. Files show their description and a token badge (neutral ink, turning red for genuinely heavy files). Large files also list their indexed symbols with line ranges beneath the file entry.
 
-Search filters by filename or description. Stats bar shows total files, average tokens per file, and the largest file.
+Search filters by filename or description.
 
 ### Bug Log
 
 Searchable bug database from `buglog.json`. Each bug expands to show:
-- Error message (in red code block)
+- Error message (in a code block)
 - Root cause
-- Fix (in green code block)
+- Fix (in a code block)
 - Tags as badges
-- Occurrence count (amber badge if seen more than once)
+- Occurrence count (badge if seen more than once)
 
 Quick-filter by clicking common tags.
 
 ## Design
 
-- **Dark/light theme** with toggle in the sidebar (preference saved in localStorage)
-- **Responsive**: sidebar collapses to bottom tab bar on mobile
-- **Live updates**: WebSocket connection pushes `.wolf/` file changes in real time
+- **Monochrome dot-matrix theme** with a single signal-red accent; dark and light modes via the top-nav pill
+- **Top navigation** with deep-linkable panels (for example `#tokens`)
+- **Live updates**: an authenticated WebSocket pushes `.wolf/` file changes in real time
 - **Lazy-loaded panels** with skeleton fallbacks
-- **Sidebar footer**: links to [OpenWolf on GitHub](https://github.com/cytostack/openwolf) and shows version
+- **Graceful auth handling**: a rejected token shows a clear message rather than a blank screen

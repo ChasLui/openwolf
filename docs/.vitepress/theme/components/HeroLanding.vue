@@ -38,7 +38,7 @@ const features = [
   {
     icon: "grid",
     title: "Every Agent, One Brain",
-    desc: "Claude Code, Codex, OpenCode, Gemini CLI, and Cursor share the same project memory. init auto-detects what you have installed and wires it. Learn once, apply everywhere.",
+    desc: "Codex, OpenCode, and Claude Code share one project memory, with Cursor and Antigravity in beta. init auto-detects what you have installed and wires it. Learn once, apply everywhere.",
     accent: "var(--ow-accent)",
   },
   {
@@ -119,7 +119,7 @@ const archFiles = [
             </h1>
 
             <p class="ow-hero__desc">
-              Coding agents re-read files they already saw, scan whole directories to find one function, and forget your conventions between sessions. OpenWolf gives Claude Code, Codex, OpenCode, Gemini CLI, and Cursor one persistent project brain: improved context management, optimized architecture scaffolding, and smarter token utilization. No workflow changes.
+              Coding agents re-read files they already saw, scan whole directories to find one function, and forget your conventions between sessions. OpenWolf gives Codex, OpenCode, Claude Code, and other agentic systems one persistent project brain: improved context management, optimized architecture scaffolding, and smarter token utilization. No workflow changes.
             </p>
 
             <div class="ow-hero__actions">
@@ -234,7 +234,7 @@ const archFiles = [
         <div class="ow-section__header reveal">
           <span class="ow-label">Features</span>
           <h2 class="ow-heading">Everything works invisibly</h2>
-          <p class="ow-subheading">OpenWolf hooks into Claude Code's lifecycle. No commands to remember. It just makes every session smarter.</p>
+          <p class="ow-subheading">OpenWolf hooks into your agent's lifecycle. No commands to remember. It just makes every session smarter.</p>
         </div>
 
         <div class="ow-features-grid">
@@ -333,7 +333,7 @@ const archFiles = [
         <div class="ow-section__header reveal">
           <span class="ow-label ow-label--warn">Hooks</span>
           <h2 class="ow-heading">The enforcement layer</h2>
-          <p class="ow-subheading">Six hooks fire on every Claude action. They warn but never block. Pure Node.js. No network, no AI, no extra cost.</p>
+          <p class="ow-subheading">Seven hooks fire on every agent action. They warn but never block. Pure Node.js. No network, no AI, no extra cost.</p>
         </div>
 
         <div class="ow-hooks reveal">
@@ -352,7 +352,7 @@ const archFiles = [
     <!-- ============================================================ -->
     <section class="ow-section ow-cta">
       <div class="ow-container ow-container--narrow reveal">
-        <h2 class="ow-heading" style="text-align: center">Make Claude Code smarter</h2>
+        <h2 class="ow-heading" style="text-align: center">Make your coding agent smarter</h2>
         <p class="ow-subheading" style="text-align: center">One install. One init. Then it's invisible.</p>
 
         <div class="ow-cta__actions">
@@ -380,7 +380,7 @@ const archFiles = [
               <img src="/wolf.svg" alt="OpenWolf" width="24" height="24" />
               <span class="ow-footer__name">OpenWolf</span>
             </div>
-            <p class="ow-footer__tagline">A second brain for Claude Code.<br />Created by Dr. Farhan Palathinkal at <a href="https://github.com/cytostack" target="_blank" class="ow-footer__link">Cytostack</a>.</p>
+            <p class="ow-footer__tagline">A second brain for AI coding agents.<br />Created by Dr. Farhan Palathinkal at <a href="https://github.com/cytostack" target="_blank" class="ow-footer__link">Cytostack</a>.</p>
           </div>
 
           <div class="ow-footer__col">

@@ -7,6 +7,7 @@ import { codexAdapter } from "./codex.js";
 import { opencodeAdapter } from "./opencode.js";
 import { geminiAdapter } from "./gemini.js";
 import { cursorAdapter } from "./cursor.js";
+import { antigravityAdapter } from "./antigravity.js";
 
 export type { AgentAdapter, AgentInstallContext, AgentInstallResult } from "./types.js";
 
@@ -18,6 +19,7 @@ const ADAPTERS: Record<string, AgentAdapter> = {
   [opencodeAdapter.name]: opencodeAdapter,
   [geminiAdapter.name]: geminiAdapter,
   [cursorAdapter.name]: cursorAdapter,
+  [antigravityAdapter.name]: antigravityAdapter,
 };
 
 export function availableAgents(): string[] {
@@ -51,6 +53,11 @@ export function detectInstalledAgents(): string[] {
     fs.existsSync(path.join(home, ".cursor")) ||
     (process.platform === "darwin" && fs.existsSync("/Applications/Cursor.app"))
   ) detected.push("cursor");
+  if (
+    fs.existsSync(path.join(home, ".antigravity")) ||
+    fs.existsSync(path.join(home, ".config", "antigravity")) ||
+    (process.platform === "darwin" && fs.existsSync("/Applications/Antigravity.app"))
+  ) detected.push("antigravity");
   return detected;
 }
 

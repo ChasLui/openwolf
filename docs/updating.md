@@ -23,18 +23,19 @@ openwolf update
    - `OPENWOLF.md`
    - `reframe-frameworks.md`
    - Hook scripts in `.wolf/hooks/`
-   - Claude rules in `.claude/rules/openwolf.md`
-3. **Preserves user data** -- these files are never overwritten:
+   - the agent rules in `.claude/rules/openwolf.md`
+3. **Preserves user data**, these files are never overwritten:
    - `config.json` (ports and tunables survive updates)
    - `cerebrum.md` (learned preferences and conventions)
    - `memory.md` (session history)
    - `buglog.json` (bug tracking)
    - `anatomy.md` (project file map)
-   - `STATUS.md` (session handoff -- created from the template if missing)
+   - `STATUS.md` (session handoff, created from the template if missing)
    - Any custom files you added to `.wolf/`
 4. **Updates hooks** registered in `.claude/settings.json` (your own hook entries are untouched)
 5. **Re-runs the agent adapters** recorded in `config.json` (`openwolf.agents`), so Codex/OpenCode/Gemini/Cursor wiring picks up new hooks and templates
 6. **Refreshes bundled skills** (`/security-audit`, `/reframe`) for every configured agent
+7. **Reassigns colliding ports**: if a project shares its dashboard or daemon port with another registered project (common for 1.x upgrades), it is moved to a free pair so each project's dashboard opens independently
 
 Running `openwolf update` and re-running `openwolf init` now produce the same result; use `update` to refresh every registered project at once.
 

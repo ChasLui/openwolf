@@ -1,6 +1,6 @@
 # Configuration
 
-OpenWolf is configured via `.wolf/config.json`. All settings have sensible defaults -- you do not need to change anything for normal use.
+OpenWolf is configured via `.wolf/config.json`. All settings have sensible defaults, you do not need to change anything for normal use.
 
 ## Full Reference
 

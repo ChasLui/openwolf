@@ -16,7 +16,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License" /></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D20-2ea44f" alt="Node.js" /></a>
   <img src="https://img.shields.io/badge/TypeScript-5.7-3178c6" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/agents-5%20supported-8957e5" alt="Agents supported" />
+  <img src="https://img.shields.io/badge/agents-6%20supported-8957e5" alt="Agents supported" />
 </p>
 
 <p align="center">
@@ -40,7 +40,7 @@
 | The agent rereads a file it already saw (~2,000 tokens) | It reads the one-line description first, or skips the read entirely |
 | Whole-file reads just to find one function | Symbol-level hints give exact line ranges for `offset`/`limit` reads |
 | Context compaction wipes what the session did | A PreCompact snapshot and restore keep the work in context |
-| Every agent starts from a cold prompt | One shared `.wolf/` brain across Claude Code, Codex, OpenCode, Gemini, and Cursor |
+| Every agent starts from a cold prompt | One shared `.wolf/` brain across Codex, OpenCode, Claude Code, Cursor, and Antigravity |
 | No idea where your tokens went | Usage measured from harness transcripts, plus a live local dashboard |
 
 <p align="center">
@@ -90,16 +90,17 @@ One `.wolf/` brain, many agents:
 
 | Agent | Integration | Depth |
 |-------|-------------|-------|
-| **Claude Code** | 7 lifecycle hooks + `CLAUDE.md` | Full (hooks + context) |
 | **Codex CLI** | `.codex/hooks.json` lifecycle hooks + `AGENTS.md` | Full (hooks + context) |
 | **OpenCode** | Native plugin + `AGENTS.md` | Full (hooks + context) |
-| **Gemini CLI** | `GEMINI.md` protocol block | Context |
-| **Cursor** | `.cursor/rules/openwolf.mdc` (always applied) | Context |
+| **Claude Code** | 7 lifecycle hooks + `CLAUDE.md` | Full (hooks + context) |
+| **Cursor** | `.cursor/rules/openwolf.mdc` (always applied) | Beta (context) |
+| **Antigravity** | `AGENTS.md` protocol block | Beta (context) |
+| **Gemini CLI** | `GEMINI.md` protocol block | Beta (context) |
 
 ```bash
 openwolf init                          # auto-detect installed agents (recommended)
 openwolf init --agent codex opencode   # wire exactly these
-openwolf init --agent all              # wire everything
+openwolf init --agent all              # wire every detected agent
 openwolf init --agent claude           # Claude Code only
 ```
 

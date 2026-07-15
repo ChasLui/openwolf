@@ -1,24 +1,24 @@
 # Reframe
 
-Curated knowledge base of 12 modern UI frameworks with battle-tested prompts for Claude. Reframe is not a CLI command -- it is a reference file that Claude reads and uses to guide framework selection and migration.
+Curated knowledge base of 13 modern UI frameworks with battle-tested prompts. Reframe ships as a `/reframe` slash command and a reference file your agent reads to guide framework selection and migration. Every prompt enforces an anti-generic design mandate so the result does not look AI-generated.
 
 ## Overview
 
-When you ask Claude to change, pick, or migrate your UI framework, Claude reads `.wolf/reframe-frameworks.md` (installed during `openwolf init`). The file contains decision criteria, framework profiles, and framework-specific prompts that Claude adapts to your project using `anatomy.md`.
+When you run `/reframe` or ask your agent to change, pick, or migrate your UI framework, it reads `.wolf/reframe-frameworks.md` (installed during `openwolf init`). The file contains decision criteria, framework profiles, and framework-specific prompts that your agent adapts to your project using the anatomy index.
 
-No CLI invocation needed. Just talk to Claude about your UI framework and Reframe activates automatically.
+Run `/reframe migrate`, `/reframe audit`, or `/reframe fix`, or simply talk to your agent about your UI framework and Reframe activates automatically.
 
 ---
 
 ## How It Works
 
 1. `.wolf/reframe-frameworks.md` is created during `openwolf init`
-2. When you mention changing or picking a UI framework, Claude reads the file
-3. Claude asks **5 decision questions** to understand your priorities and constraints
-4. Claude recommends a framework based on your answers
-5. Claude uses the framework-specific prompt -- adapted to your project via `anatomy.md` -- to execute the installation and migration
+2. When you run `/reframe` or mention changing a UI framework, your agent reads the file
+3. Your agent asks **5 decision questions** to understand your priorities and constraints
+4. Your agent recommends a framework based on your answers
+5. Your agent uses the framework-specific prompt, adapted to your project via the anatomy index, to execute the installation and migration
 
-The framework-specific prompts handle dependency installation, configuration, component patterns, and common migration steps. Claude tailors them to your actual project structure.
+The framework-specific prompts handle dependency installation, configuration, component patterns, and common migration steps. Your agent tailors them to your actual project structure.
 
 ---
 
@@ -69,27 +69,32 @@ Use this priority table to narrow the choice before reading full profiles:
 ## Example Conversation
 
 ```
-You: I want to switch my UI framework
-Claude: [reads reframe-frameworks.md]
-        What framework does your project currently use?
-You: React with plain Tailwind, no component library
-Claude: What's your priority -- animations, speed, control, or accessibility?
-You: Stunning animations for a landing page
-Claude: I'd recommend Aceternity UI or Magic UI.
-        Aceternity gives cinematic scroll effects with Framer Motion.
-        Magic UI gives a polished SaaS look inspired by Linear and Vercel.
-        Which direction fits better?
-You: Let's go with Aceternity
-Claude: [uses Aceternity prompt adapted to your project]
-        [installs dependencies]
-        [refactors components with animation patterns]
+You:   /reframe migrate
+Agent: [reads reframe-frameworks.md]
+       What framework does your project currently use?
+You:   React with plain Tailwind, no component library
+Agent: What's your priority: animations, speed, control, or accessibility?
+You:   Stunning animations for a landing page
+Agent: I'd recommend Aceternity UI or Magic UI.
+       Aceternity gives cinematic scroll effects with Framer Motion.
+       Magic UI gives a polished SaaS look inspired by Linear and Vercel.
+       Which direction fits better?
+You:   Let's go with Aceternity
+Agent: [uses Aceternity prompt, de-genericized per the design mandate]
+       [installs dependencies]
+       [refactors components with animation patterns]
 ```
 
-Claude handles the entire migration: installing packages, updating configs, converting components, and verifying the build still passes.
+Your agent handles the entire migration: installing packages, updating configs, converting components, and verifying the build still passes.
 
 ---
 
-## Works with Design QC
+## Audit and fix modes
 
-
-This loop keeps design decisions grounded in actual visual output rather than guesswork.
+Beyond migration, `/reframe audit <target>` scans existing UI against the
+anti-generic design mandate (purple gradient heroes, glassmorphism everywhere,
+template feature grids, stock palettes, and other AI tells) and reports what to
+change. `/reframe fix <target>` applies those fixes toward a distinctive result,
+preserving your framework and component APIs. Distinctiveness is an acceptance
+criterion: if the design could be swapped onto any other product without anyone
+noticing, it fails.
